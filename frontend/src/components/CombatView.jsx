@@ -267,7 +267,7 @@ function drawSmartOne({ pool, hpRatio, turnsSinceHeal, turnsSinceDefend, recentI
 
   let preferred = null;
 
-  if (hpRatio <= 0.5 && canHeal) preferred = "heal";
+  if (hpRatio <= 0.7 && canHeal) preferred = "heal";
   else if (turnsSinceDefend >= 3 && canDef) preferred = "defend";
   else if (canAtk) preferred = "attack";
   else preferred = null;
@@ -658,7 +658,7 @@ export default function CombatView({
 
     if (choice.kind === "big_damage") {
       const base = Math.max(1, Math.floor((enemy?.maxHp ?? 1) * 0.6));
-      const extra = Math.floor(playerIntellect * 1.25);
+      const extra = Math.floor(playerIntellect * 2.25);
       const dmg = base + extra;
 
       spawnAbilityEffect({
