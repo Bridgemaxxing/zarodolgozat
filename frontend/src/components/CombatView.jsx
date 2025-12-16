@@ -49,9 +49,9 @@ const ARCANE_CHOICES = [
   {
     id: "arcane_30pct",
     name: "Arcane Burst",
-    desc: "30% DMG",
+    desc: "50% DMG",
     kind: "damage_percent",
-    percent: 0.3,
+    percent: 0.5,
     img: "",
   },
   {
@@ -657,7 +657,7 @@ export default function CombatView({
     }
 
     if (choice.kind === "big_damage") {
-      const base = Math.max(1, Math.floor((enemy?.maxHp ?? 1) * 0.6));
+      const base = Math.max(1, Math.floor((enemy?.maxHp ?? 1) * 1.0));
       const extra = Math.floor(playerIntellect * 2.25);
       const dmg = base + extra;
 
