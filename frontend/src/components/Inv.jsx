@@ -8,6 +8,7 @@ import {
   buildDefaultDeckForClass,
 } from "../data/abilities.js";
 import spellbookImg from "../assets/pics/spellbook.png";
+import HAZImg from "../assets/pics/HAZ.jpg";
 import StatModal from "./StatModal.jsx";
 
 // UGYANAZ a helper, mint CombatView-ben
@@ -23,6 +24,11 @@ function resolveCardImageFromAbility(ab) {
 }
 
 export default function Inv({ onClose }) {
+  const { player, setPlayer } = usePlayer();
+
+  /* ==============================
+     MODAL STATE
+     ============================== */
   const [showInventory, setShowInventory] = useState(false);
   const [showDeckEditor, setShowDeckEditor] = useState(false);
   const [showStats, setShowStats] = useState(false);
@@ -31,16 +37,42 @@ export default function Inv({ onClose }) {
 
   const anyModalOpen = showInventory || showDeckEditor || showStats;
 
+  /* ==============================
+     INVENTORY STATE
+     ============================== */
+  const [inventoryItems, setInventoryItems] = useState([]);
+  const [selectedItem, setSelectedItem] = useState(null);
+
+  /* ==============================
+     DECK STATE
+     ============================== */
   const classKey = useMemo(
     () => getClassKeyFromId(player?.class_id),
     [player?.class_id]
   );
 
-  const abilityPool = useMemo(
-    () => getAbilitiesForClass(classKey),
-    [classKey]
-  );
+  const abilityPool = useMemo(() => getAbilitiesForClass(classKey), [classKey]);
 
+  const MAX_DECK_SIZE = 30;
+  const MIN_DECK_SIZE = 10;
+  const MAX_PER_RARITY = {
+    common: 4,
+    rare: 3,
+    epic: 2,
+    legendary: 1,
+  };
+
+  const [tempDeck, setTempDeck] = useState(player?.deck || []);
+
+  useEffect(() => {
+    if (Array.isArray(player?.deck)) {
+      setTempDeck([...player.deck]);
+    }
+  }, [player?.deck]);
+
+  /* ==============================
+     ALAP PAKLI LÉTREHOZÁS
+     ============================== */
   useEffect(() => {
     if (!player || !setPlayer) return;
     if (Array.isArray(player.deck) && player.deck.length > 0) return;
@@ -135,7 +167,7 @@ export default function Inv({ onClose }) {
           width: "1920px",
           height: "1088px",
           background: "black",
-          backgroundImage: `url("./src/assets/pics/HAZ.jpg")`,
+          backgroundImage: `url(${HAZImg})`,
           backgroundSize: "cover",
           backgroundPosition: "center",
           position: "relative",
@@ -143,10 +175,10 @@ export default function Inv({ onClose }) {
       >
         <h2 className="text-center mb-2 text-sm text-white">OTTHON</h2>
 
-        {/* STAT MODAL (ÁGY) */}
+        {/* STAT MODAL */}
         {showStats && <StatModal onClose={() => setShowStats(false)} />}
 
-        {/* INVENTORY MODAL (LÁDA) */}
+        {/* INVENTORY MODAL */}
         {showInventory && (
           <div className="absolute inset-0 bg-black/80 flex items-center justifycenter p-10 z-40">
             <div className="bg-gray-900 p-6 rounded-2xl shadow-xl w-3/4 h-3/4 overflow-auto text-white">
@@ -176,6 +208,13 @@ export default function Inv({ onClose }) {
                 >
                   Bezárás
                 </button>
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-center text-gray-400 mt-20">
+                    Válassz ki egy tárgyat
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -380,6 +419,15 @@ export default function Inv({ onClose }) {
                 height: "300px",
               }}
               onClick={() => setShowInventory(true)}
+            >
+              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition"></div>
+            </div>
+
+            {/* ÁGY → STAT MODAL */}
+            <div
+              className={`absolute cursor-pointer group ${anyModalOpen ? "pointer-events-none" : ""}`}
+              style={{ right: "10%", bottom: "5%", width: "650px", height: "350px" }}
+              onClick={() => setShowStats(true)}
             >
               <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition"></div>
             </div>
