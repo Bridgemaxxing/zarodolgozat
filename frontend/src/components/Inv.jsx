@@ -10,7 +10,9 @@ import spellbookImg from "../assets/pics/spellbook.png";
 import HAZImg from "../assets/pics/HAZ.jpg";
 import StatModal from "./StatModal.jsx";
 
-// UGYANAZ a helper, mint CombatView-ben
+/* ==============================
+   HELPERS
+   ============================== */
 function resolveCardImageFromAbility(ab) {
   if (!ab) return "";
   if (typeof ab.image === "string" && ab.image.startsWith("/cards/")) {
@@ -34,13 +36,13 @@ export default function Inv({ onClose }) {
   const anyModalOpen = showInventory || showDeckEditor || showStats;
 
   /* ==============================
-     INVENTORY STATE
+     INVENTORY (ELŐKÉSZÍTVE)
      ============================== */
   const [inventoryItems, setInventoryItems] = useState([]);
   const [selectedItem, setSelectedItem] = useState(null);
 
   /* ==============================
-     DECK STATE
+     DECK / CLASS
      ============================== */
   const classKey = useMemo(
     () => getClassKeyFromId(player?.class_id),
@@ -49,6 +51,9 @@ export default function Inv({ onClose }) {
 
   const abilityPool = useMemo(() => getAbilitiesForClass(classKey), [classKey]);
 
+  /* ==============================
+     DECK LIMITS
+     ============================== */
   const MAX_DECK_SIZE = 30;
   const MIN_DECK_SIZE = 10;
   const MAX_PER_RARITY = {
@@ -67,7 +72,7 @@ export default function Inv({ onClose }) {
   }, [player?.deck]);
 
   /* ==============================
-     ALAP PAKLI LÉTREHOZÁS
+     ALAP PAKLI
      ============================== */
   useEffect(() => {
     if (!player || !setPlayer) return;
@@ -81,6 +86,9 @@ export default function Inv({ onClose }) {
     }));
   }, [player, setPlayer, classKey]);
 
+  /* ==============================
+     TEMP DECK
+     ============================== */
   const [tempDeck, setTempDeck] = useState(player?.deck || []);
 
   useEffect(() => {
@@ -226,6 +234,9 @@ function unequipItem(itemId) {
     [deckCounts]
   );
 
+  /* ==============================
+     RENDER
+     ============================== */
   return (
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
       <div
