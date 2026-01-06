@@ -1,11 +1,9 @@
 // frontend/src/components/CombatView.jsx
-
 import React, { useEffect, useState, useMemo, useRef } from "react";
 import { usePlayer } from "../context/PlayerContext.jsx";
 import { getRandomEnemy } from "./enemyData";
 import EnemyFrame from "./EnemyFrame";
 import HPPopup from "./HPPopup";
-
 import AbilityEffectLayer from "./AbilityEffectLayer";
 
 // ===== MAGE FX =====
@@ -22,7 +20,6 @@ import icelance from "../assets/effects/mage_icelance.webm";
 import manaShieldFx from "../assets/effects/mage_mana_shield.webm";
 
 // ===== WARRIOR FX =====
-// ❗ Írd át a fájlneveket a nálad lévő .webm-ekre
 import warriorSlashFx from "../assets/effects/warrior_slash.webm";
 import warriorCleaveFx from "../assets/effects/warrior_cleave.webm";
 import warriorBattleCryFx from "../assets/effects/warrior_battle_cry.webm";
@@ -32,6 +29,12 @@ import warriorCrushingBlowFx from "../assets/effects/warrior_crushing_blow.webm"
 import warriorParryFx from "../assets/effects/warrior_parry.webm";
 import warriorShieldWallFx from "../assets/effects/warrior_shield_wall.webm";
 import warriorLastStandFx from "../assets/effects/warrior_last_stand.webm";
+
+// ✅ ÚJ: WARRIOR ENRAGE / AURA FX IMPORT
+import warriorAura1 from "../assets/effects/warrior_aura_1.webm";
+import warriorAura2 from "../assets/effects/warrior_aura_2.webm";
+import warriorAura3 from "../assets/effects/warrior_aura_3.webm";
+
 
 import {
   getClassKeyFromId,
@@ -114,6 +117,17 @@ const WARRIOR_RAGE = {
   VIS_MAX_OPACITY: 0.95,
   VIS_MAX_BLUR: 16,
   VIS_RING_PX: 10,
+};
+
+
+
+
+const WARRIOR_RAGE_CFG = {
+  STAGES: {
+    LOW: 0.75,     // 75% HP alatt aura1
+    MEDIUM: 0.5,   // 50% HP alatt aura2
+    HIGH: 0.25,    // 25% HP alatt aura3
+  },
 };
 function warriorDamageOutMult(rage01) {
   return 1 + rage01 * WARRIOR_RAGE.OUT_MAX_BONUS;
@@ -514,7 +528,7 @@ export default function CombatView({ level = 1, boss = false, enemies = [], back
   const combatRootRef = useRef(null);
   const playerAnchorRef = useRef(null);
   const enemyAnchorRef = useRef(null);
-
+  
   // ✅ timeout tracking
   const timersRef = useRef([]);
   const trackTimeout = (id) => {
@@ -620,55 +634,60 @@ export default function CombatView({ level = 1, boss = false, enemies = [], back
   const [enemyDamaged, setEnemyDamaged] = useState(false);
 
   const [abilityEffects, setAbilityEffects] = useState([]);
+  const [activeAuraId, setActiveAuraId] = useState(null);
+  const [currentAuraSrc, setCurrentAuraSrc] = useState(null);
   const logEndRef = useRef(null);
 
   // ✅ DOM-anchored VFX spawn (targetenként offsettel)
-  function spawnAbilityEffect({ src, target = "center", width, height }) {
-    const id = Date.now() + Math.random();
+  // ✅ DOM-anchored VFX spawn (targetenként offsettel) + loop + RETURN ID
+function spawnAbilityEffect({ src, target = "center", width, height, loop = false }) {
+  const id = Date.now() + Math.random();
 
-    const root = combatRootRef.current;
-    const playerEl = playerAnchorRef.current;
-    const enemyEl = enemyAnchorRef.current;
+  const root = combatRootRef.current;
+  const playerEl = playerAnchorRef.current;
+  const enemyEl = enemyAnchorRef.current;
 
-    let pos = null;
+  let pos = null;
 
-    if (root) {
-      const rootRect = root.getBoundingClientRect();
+  if (root) {
+    const rootRect = root.getBoundingClientRect();
 
-      const centerOf = (el) => {
-        const r = el.getBoundingClientRect();
-        return {
-          x: r.left + r.width / 2 - rootRect.left,
-          y: r.top + r.height / 2 - rootRect.top,
-        };
+    const centerOf = (el) => {
+      const r = el.getBoundingClientRect();
+      return {
+        x: r.left + r.width / 2 - rootRect.left,
+        y: r.top + r.height / 2 - rootRect.top,
       };
+    };
 
-      if (target === "player" || target === "player_shield") {
-        if (playerEl) pos = centerOf(playerEl);
-      } else if (target.startsWith("enemy")) {
-        if (enemyEl) pos = centerOf(enemyEl);
-      } else {
-        pos = { x: rootRect.width / 2, y: rootRect.height / 2 };
-      }
-
-      const OFFSETS = {
-        player: { x: 100, y: 110 },
-        player_shield: { x: 90, y: 90 },
-        enemy: { x: 0, y: 35 },
-        enemy_hit: { x: -2, y: 50 },
-        enemy_aoe: { x: 360, y: 100 },
-        enemy_stun: { x: 350, y: -150 },
-        enemy_shield: { x: 350, y: 90 },
-      };
-
-      const o = OFFSETS[target] || { x: 0, y: 0 };
-      pos = { x: pos.x + o.x, y: pos.y + o.y };
+    if (target === "player" || target === "player_shield") {
+      if (playerEl) pos = centerOf(playerEl);
+    } else if (target.startsWith("enemy")) {
+      if (enemyEl) pos = centerOf(enemyEl);
+    } else {
+      pos = { x: rootRect.width / 2, y: rootRect.height / 2 };
     }
 
-    setAbilityEffects((prev) => [...prev, { id, src, target, width, height, pos }]);
+    const OFFSETS = {
+      player: { x: 90, y: 110 },
+      player_shield: { x: 90, y: 90 },
+      enemy: { x: 0, y: 35 },
+      enemy_hit: { x: -2, y: 50 },
+      enemy_aoe: { x: 360, y: 100 },
+      enemy_stun: { x: 350, y: -150 },
+      enemy_shield: { x: 350, y: 90 },
+    };
+
+    const o = OFFSETS[target] || { x: 0, y: 0 };
+    pos = { x: pos.x + o.x, y: pos.y + o.y };
   }
 
-  const [playerDamageBuff, setPlayerDamageBuff] = useState(null);
+  setAbilityEffects((prev) => [...prev, { id, src, target, width, height, pos, loop }]);
+
+  return id; // ✅ ettől fog működni az aura ID
+}
+
+const [playerDamageBuff, setPlayerDamageBuff] = useState(null);
   const [enemyPoison, setEnemyPoison] = useState(null);
   const [enemyBurn, setEnemyBurn] = useState(null);
   const [enemyStun, setEnemyStun] = useState(0);
@@ -767,6 +786,9 @@ export default function CombatView({ level = 1, boss = false, enemies = [], back
 
     return { used: false, consumesTurn: true };
   }
+
+  
+
 
   useEffect(() => {
     if (logEndRef.current) logEndRef.current.scrollIntoView({ behavior: "smooth" });
@@ -1011,6 +1033,49 @@ export default function CombatView({ level = 1, boss = false, enemies = [], back
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [level, boss, pathType, enemies, player, classKey, maxHPFromPlayer]);
 
+
+  useEffect(() => {
+    if (classKey !== "warrior" || playerHP <= 0 || battleOver) {
+      if (activeAuraId) {
+        setAbilityEffects(prev => prev.filter(e => e.id !== activeAuraId));
+        setActiveAuraId(null);
+        setCurrentAuraSrc(null);
+      }
+      return;
+    }
+
+    const hpRatio = playerHP / maxHPFromPlayer;
+    let nextAuraSrc = null;
+
+    if (hpRatio <= WARRIOR_RAGE_CFG.STAGES.HIGH) nextAuraSrc = warriorAura3;
+    else if (hpRatio <= WARRIOR_RAGE_CFG.STAGES.MEDIUM) nextAuraSrc = warriorAura2;
+    else if (hpRatio <= WARRIOR_RAGE_CFG.STAGES.LOW) nextAuraSrc = warriorAura1;
+
+    if (nextAuraSrc !== currentAuraSrc) {
+      if (activeAuraId) {
+        setAbilityEffects(prev => prev.filter(e => e.id !== activeAuraId));
+      }
+
+      if (nextAuraSrc) {
+        const newId = spawnAbilityEffect({
+          src: nextAuraSrc,
+          target: "player",
+          width: "1100px",
+          height: "1100px",
+          loop: true
+        });
+        setActiveAuraId(newId);
+        setCurrentAuraSrc(nextAuraSrc);
+      } else {
+        setActiveAuraId(null);
+        setCurrentAuraSrc(null);
+        if (currentAuraSrc) { // Ha volt aura, de már nincs, adjunk egy heal effektet
+            spawnAbilityEffect({ src: healFx, target: "player", width: "700px", height: "700px" });
+        }
+      }
+    }
+  }, [playerHP, maxHPFromPlayer, classKey, battleOver]);
+
   // ===== ARCANE =====
   function castArcane(choice) {
     if (battleOverRef.current) return;
@@ -1169,7 +1234,7 @@ export default function CombatView({ level = 1, boss = false, enemies = [], back
           spawnAbilityEffect({ src: warriorCleaveFx, target: "enemy_hit", width: "1100px", height: "1100px" });
         }
         if (card.abilityId === "warrior_battle_cry") {
-          spawnAbilityEffect({ src: warriorBattleCryFx, target: "player", width: "1200px", height: "1200px" });
+          spawnAbilityEffect({ src: warriorBattleCryFx, target: "enemy_aoe", width: "1200px", height: "1200px" });
         }
         if (card.abilityId === "warrior_mortal_strike") {
           spawnAbilityEffect({ src: warriorMortalStrikeFx, target: "enemy_hit", width: "1100px", height: "1100px" });
@@ -1823,8 +1888,28 @@ export default function CombatView({ level = 1, boss = false, enemies = [], back
           )}
 
           {/* PLAYER (anchor ref!) */}
-          <div ref={playerAnchorRef} className="absolute top-24 left-[20%] -translate-x-1/2 z-10">
+                    <div
+            ref={playerAnchorRef}
+            className="absolute top-24 left-[20%] -translate-x-1/2 z-10 transition-all duration-500 ease-in-out"
+          >
+
             <div className="relative inline-block rounded-xl overflow-hidden" style={warriorFrameStyle}>
+              {/* ENRAGE SZÖVEG - Csak ha aktív az aura */}
+              {activeAuraId && (
+               <div
+                className="absolute z-[60] whitespace-nowrap pointer-events-none"
+                style={{
+                  top: "-30px",
+                  left: "-1000px",
+                }}
+              >
+                  <span className="text-red-500 font-black text-2xl italic animate-pulse" 
+                        style={{ textShadow: '2px 2px 0px #000, 0 0 10px rgba(255,0,0,0.8)' }}>
+                    💢 ENRAGED
+                  </span>
+                </div>
+              )}
+
               <EnemyFrame
                 name={player.username || "Player"}
                 hp={playerHP}
@@ -1998,10 +2083,16 @@ export default function CombatView({ level = 1, boss = false, enemies = [], back
             </div>
           )}
 
-          <AbilityEffectLayer
-            effects={abilityEffects}
-            onEffectDone={(id) => setAbilityEffects((prev) => prev.filter((fx) => fx.id !== id))}
-          />
+          <AbilityEffectLayer 
+        effects={abilityEffects} 
+        onEffectDone={(id) => {
+            setAbilityEffects((prev) => {
+              const eff = prev.find((e) => e.id === id);
+              if (eff && eff.loop) return prev; // ✅ loopoló aura marad
+              return prev.filter((e) => e.id !== id);
+            });
+          }} 
+      />
         </div>
       </div>
 
