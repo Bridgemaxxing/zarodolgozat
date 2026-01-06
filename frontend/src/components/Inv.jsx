@@ -1,4 +1,3 @@
-// frontend/src/components/Inv.jsx
 import React, { useState, useMemo, useEffect } from "react";
 import { usePlayer } from "../context/PlayerContext.jsx";
 import {
@@ -32,9 +31,6 @@ export default function Inv({ onClose }) {
   const [showInventory, setShowInventory] = useState(false);
   const [showDeckEditor, setShowDeckEditor] = useState(false);
   const [showStats, setShowStats] = useState(false);
-
-  const { player, setPlayer } = usePlayer();
-
   const anyModalOpen = showInventory || showDeckEditor || showStats;
 
   /* ==============================
@@ -88,21 +84,91 @@ export default function Inv({ onClose }) {
   const [tempDeck, setTempDeck] = useState(player?.deck || []);
 
   useEffect(() => {
-    if (Array.isArray(player?.deck)) {
-      setTempDeck([...player.deck]);
-    }
-  }, [player?.deck]);
+    if (!showInventory || !player?.id) return;
 
-  const MAX_DECK_SIZE = 30;
-  const MIN_DECK_SIZE = 10;
+    fetch(`http://localhost:3000/api/inventory/${player.id}`)
+    
+      .then((res) => {
+        if (!res.ok) throw new Error("Inventory fetch error");
+        console.log("Player ID:", player?.id);
+        return res.json();
+      })
+      .then((data) => {
+        setInventoryItems(data);
+        setSelectedItem(null);
+      })
+      .catch((err) => {
+        console.error(err);
+        alert("Nem sikerült betölteni az inventoryt");
+      });
+  }, [showInventory, player?.id]);
 
-  const MAX_PER_RARITY = {
-    common: 4,
-    rare: 3,
-    epic: 2,
-    legendary: 1,
-  };
+  /* ==============================
+     EQUIP / UNEQUIP
+     ============================== */
+  function equipItem(itemId) {
+  fetch("http://localhost:3000/api/inventory/equip", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      playerId: player.id,
+      itemId,
+    }),
+  })
+    .then((res) => {
+      if (!res.ok) throw new Error("Equip failed");
+      return res.json();
+    })
+    .then(() => {
+      setInventoryItems((prev) =>
+        prev.map((it) => {
+          // kikapcsoljuk az azonos típusú itemeket
+          if (it.type === selectedItem.type && it.type !== "potion") {
+            return { ...it, is_equipped: false };
+          }
+          // bekapcsoljuk a kiválasztott itemt
+          if (it.item_id === itemId) {
+            return { ...it, is_equipped: true };
+          }
+          return it;
+        })
+      );
+    })
+    .catch((err) => {
+      console.error(err);
+      alert("Hiba az equip során");
+    });
+}
 
+function unequipItem(itemId) {
+  fetch("http://localhost:3000/api/inventory/unequip", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      playerId: player.id,
+      itemId,
+    }),
+  })
+    .then((res) => {
+      if (!res.ok) throw new Error("Unequip failed");
+      return res.json();
+    })
+    .then(() => {
+      setInventoryItems((prev) =>
+        prev.map((it) =>
+          it.item_id === itemId ? { ...it, is_equipped: false } : it
+        )
+      );
+    })
+    .catch((err) => {
+      console.error(err);
+      alert("Hiba az unequip során");
+    });
+}
+
+  /* ==============================
+     DECK HANDLERS
+     ============================== */
   function handleAddToDeck(abilityId) {
     if (tempDeck.length >= MAX_DECK_SIZE) return;
 
@@ -180,34 +246,72 @@ export default function Inv({ onClose }) {
 
         {/* INVENTORY MODAL */}
         {showInventory && (
-          <div className="absolute inset-0 bg-black/80 flex items-center justifycenter p-10 z-40">
-            <div className="bg-gray-900 p-6 rounded-2xl shadow-xl w-3/4 h-3/4 overflow-auto text-white">
-              <h2 className="text-xl font-bold mb-6 text-center">TÁRGYAK</h2>
-
-              <div className="grid grid-cols-4 gap-6">
-                {Array(4)
-                  .fill("")
-                  .map((_, colIndex) => (
-                    <div key={colIndex}>
-                      <div className="grid grid-cols-3 gap-3">
-                        {Array.from({ length: 15 }).map((_, i) => (
-                          <div
-                            key={i}
-                            className="w-full h-20 bg-gray-700 border border-gray-600 hover:bg-gray-600 transition cursor-pointer"
-                          ></div>
-                        ))}
-                      </div>
+          <div className="absolute inset-0 bg-black/80 flex items-center justify-center p-10 z-40">
+            <div className="bg-gray-900 p-6 rounded-2xl shadow-xl w-3/4 h-3/4 text-white flex gap-6">
+              {/* BAL OLDAL – INVENTORY */}
+              <div className="grid grid-cols-4 gap-4 w-2/3 overflow-auto">
+                {inventoryItems.length === 0 && (
+                  <div className="text-gray-400 col-span-4 text-center mt-20">
+                    Az inventory üres
+                  </div>
+                )}
+                {inventoryItems.map((item) => (
+                  <div
+                    key={item.item_id}
+                    onClick={() => setSelectedItem(item)}
+                    className={`relative h-24 border rounded-lg cursor-pointer flex flex-col justify-center items-center text-xs
+                      ${item.is_equipped ? "border-emerald-500 bg-emerald-900/30" : "border-gray-600 bg-gray-800"}
+                      ${selectedItem?.item_id === item.item_id ? "ring-2 ring-yellow-400" : ""}
+                    `}
+                  >
+                    <div className="font-semibold">{item.name}</div>
+                    <div className="uppercase text-[10px] text-gray-300">
+                      {item.type} • {item.rarity}
                     </div>
-                  ))}
+                    {item.is_equipped && (
+                      <div className="absolute top-1 right-2 text-[10px] text-emerald-400">
+                        EQUIPPED
+                      </div>
+                    )}
+                  </div>
+                ))}
               </div>
 
-              <div className="text-center mt-6">
-                <button
-                  className="px-6 py-2 bg-red-600 hover:bg-red-700 rounded-xl"
-                  onClick={() => setShowInventory(false)}
-                >
+              {/* JOBB OLDAL – INFO */}
+              <div className="w-1/3 bg-gray-800 rounded-xl p-4 flex flex-col justify-between">
+                {selectedItem ? (
+                  <>
+                    <div>
+                      <h3 className="text-lg font-bold mb-2">{selectedItem.name}</h3>
+                      <div className="text-sm space-y-1">
+                        {selectedItem.bonus_strength > 0 && <div>🗡 Erő: +{selectedItem.bonus_strength}</div>}
+                        {selectedItem.bonus_intellect > 0 && <div>🧠 Intelligencia: +{selectedItem.bonus_intellect}</div>}
+                        {selectedItem.bonus_defense > 0 && <div>🛡 Védelem: +{selectedItem.bonus_defense}</div>}
+                        {selectedItem.bonus_hp > 0 && <div>❤️ Életerő: +{selectedItem.bonus_hp}</div>}
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      {!selectedItem.is_equipped ? (
+                        <button
+                          className="w-full py-2 bg-emerald-600 rounded hover:bg-emerald-500"
+                          onClick={() => equipItem(selectedItem.item_id)}
+                        >
+                          Equip
+                        </button>
+                      ) : (
+                        <button
+                          className="w-full py-2 bg-red-600 rounded hover:bg-red-500"
+                          onClick={() => unequipItem(selectedItem.item_id)}
+                        >
+                          Levétel
+                        </button>
+                      )}
+                      <button
+                        className="w-full py-2 bg-gray-700 rounded hover:bg-gray-600"
+                        onClick={() => setSelectedItem(null)}
+                      >
                   Bezárás
-                </button>
+                      </button>
                     </div>
                   </>
                 ) : (
@@ -244,10 +348,10 @@ export default function Inv({ onClose }) {
               {/* KÖNYV + LAYOUT */}
               <div className="relative flex-1 flex items-center justify-center">
                 <img
-                    src={spellbookImg}
-                    alt="Spellbook"
-                    className="w-[85%] h-auto pointer-events-none select-none drop-shadow-[0_0_25px_rgba(0,0,0,0.9)]"
-                  />
+                  src={spellbookImg}
+                  alt="Spellbook"
+                  className="w-[85%] h-auto pointer-events-none select-none drop-shadow-[0_0_25px_rgba(0,0,0,0.9)]"
+                />
 
                 {/* Lapokra osztott tartalom */}
                 <div
