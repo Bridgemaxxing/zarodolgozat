@@ -1,86 +1,69 @@
-// frontend/src/components/TransitionOverlay.jsx
 import React, { useEffect, useRef, useState } from "react";
 
 export default function TransitionOverlay({
-  src,
+  src, // Itt már a preloadVideo-ból kapott URL-t használd!
   onEnd,
-
-  // mikor induljon a videó (ms)
   videoDelay = 200,
-
-  // SÖTÉTÍTÉS FÁZISOK
-  darkOpacityStart = 1.0,  // induláskor: full fekete
-  darkOpacityMid = 0.6,    // villám közben: enyhébb sötétítés
-  fadeDuration = 600       // kifakulás ideje (ms)
+  darkOpacityStart = 1.0,
+  darkOpacityMid = 0.6,
+  fadeDuration = 600
 }) {
   const videoRef = useRef(null);
-
-  const [showVideo, setShowVideo] = useState(false);
   const [phase, setPhase] = useState("start"); // "start" | "mid" | "out"
 
-  // időzítés: mikor induljon a videó + mikor lépjünk "mid" fázisba
   useEffect(() => {
+    // 1. Ütemezzük a fázisváltást és a videó indítását
     const timer = setTimeout(() => {
-      setShowVideo(true);
-      setPhase("mid"); // ekkor lesz sötétségből kicsit világosabb
+      setPhase("mid");
+      if (videoRef.current) {
+        // Mivel már a memóriában van (Blob), a play() azonnali lesz
+        videoRef.current.play().catch((err) => {
+          console.error("Transition video play error:", err);
+          handleVideoEnd();
+        });
+      }
     }, videoDelay);
 
     return () => clearTimeout(timer);
   }, [videoDelay]);
 
-  // videó indítása, amikor láthatóvá vált
-  useEffect(() => {
-    if (!showVideo) return;
-    const v = videoRef.current;
-    if (!v) return;
-
-    v.currentTime = 0;
-    v.play().catch((err) => {
-      console.error("Transition video play error:", err);
-      handleVideoEnd();
-    });
-  }, [showVideo]);
-
   function handleVideoEnd() {
-    setPhase("out");        // indul a kifakulás
+    setPhase("out");
     setTimeout(() => {
       onEnd?.();
     }, fadeDuration);
   }
 
-  // AKTUÁLIS OPACITY a fázis alapján
-  const currentOpacity =
-    phase === "start"
-      ? darkOpacityStart
-      : phase === "mid"
-      ? darkOpacityMid
-      : 0;
+  // Opacity kiszámítása a fázisok alapján
+  const getOverlayOpacity = () => {
+    if (phase === "start") return darkOpacityStart;
+    if (phase === "mid") return darkOpacityMid;
+    return 0;
+  };
 
   return (
-    <div
-      className="fixed inset-0 pointer-events-none"
-      style={{ zIndex: 9999 }}
-    >
-      {/* VIDEÓ – alul */}
-      {showVideo && src && (
-        <video
-          ref={videoRef}
-          src={src}
-          className="absolute inset-0 w-screen h-screen object-cover"
-          muted
-          autoPlay
-          playsInline
-          onEnded={handleVideoEnd}
-          onError={handleVideoEnd}
-        />
-      )}
+    <div className="fixed inset-0 pointer-events-none" style={{ zIndex: 9999 }}>
+      {/* A videó MINDIG renderelődik, ha van src. 
+         Az opacity váltás segít, hogy ne legyen 'fekete villanás' az induláskor.
+      */}
+      <video
+        ref={videoRef}
+        src={src}
+        className={`absolute inset-0 w-screen h-screen object-cover transition-opacity duration-300 ${
+          phase === "start" ? "opacity-0" : "opacity-100"
+        }`}
+        muted
+        playsInline
+        onEnded={handleVideoEnd}
+        onError={handleVideoEnd}
+      />
 
-      {/* FEKETE RÉGÉ – FELÜL, KIS ÁTLÁTSZÓSÁGGAL */}
+      {/* Fekete réteg a videó felett */}
       <div
         className="absolute inset-0"
         style={{
           backgroundColor: "black",
-          opacity: currentOpacity,
+          opacity: getOverlayOpacity(),
           transition: `opacity ${fadeDuration}ms ease`,
         }}
       />

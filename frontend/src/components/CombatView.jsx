@@ -254,6 +254,12 @@ const SMART_DRAW = {
   DRAW_ANIM_MS: 320,
 };
 
+// ===== ENEMY TURN TIMING (állítható delay-ek) =====
+// Enemy köre ennyi ms múlva indul a player akció után.
+const ENEMY_TURN_DELAY_MS = 650;
+// Basic attack VFX “lendítés” (sebzés ennyi ms múlva történik a VFX indítása után).
+const ENEMY_BASIC_WINDUP_MS = 220;
+
 const SMART_BIAS = {
   warrior: { HEAL_THRESHOLD: 0.65, PANIC_HP: 0.35, DEFEND_AFTER_TURNS: 3, PANIC_DEFENSIVE_CHANCE: 0.7, PANIC_STUN_CHANCE: 0.3, MAX_HEAL_IN_HAND: 1, MAX_HEAL_IN_HAND_LOWHP: 2, LOWHP_FOR_2HEAL: 0.3 },
   mage: { HEAL_THRESHOLD: 0.72, PANIC_HP: 0.45, DEFEND_AFTER_TURNS: 3, PANIC_DEFENSIVE_CHANCE: 0.55, PANIC_STUN_CHANCE: 0.25, MAX_HEAL_IN_HAND: 1, MAX_HEAL_IN_HAND_LOWHP: 2, LOWHP_FOR_2HEAL: 0.3 },
@@ -1522,6 +1528,8 @@ const [playerDamageBuff, setPlayerDamageBuff] = useState(null);
   useEffect(() => {
     if (!enemy || battleOver || turn !== "enemy") return;
 
+    const baseDelay = ENEMY_TURN_DELAY_MS + (boss ? 300 : 0);
+
     const t = setTimeout(() => {
       if (battleOverRef.current) return;
 
@@ -1604,60 +1612,70 @@ const [playerDamageBuff, setPlayerDamageBuff] = useState(null);
         return;
       }
 
-      // ===== BASIC ATTACK =====
-      const [minDmg, maxDmg] = enemy.dmg;
-      let dmg = Math.floor(Math.random() * (maxDmg - minDmg + 1)) + minDmg;
+      // ===== BASIC ATTACK (VFX + állítható delay) =====
+      // Enemy basic attack VFX (warrior slash)
+      spawnAbilityEffect({ src: warriorSlashFx, target: "player", width: "1000px", height: "1000px" });
 
-      if (defending && defending > 0) {
-        dmg = Math.floor(dmg / 2);
-        setDefending((prev) => Math.max(0, (prev || 1) - 1));
-      }
+      // A tényleges sebzés egy rövid “windup” után történik, hogy a VFX látszódjon
+      trackTimeout(setTimeout(() => {
+        if (battleOverRef.current) return;
 
-      const finalBase = Math.max(0, dmg - Math.floor((player?.defense ?? 0) / 2));
-      let final = finalBase;
+        const [minDmg, maxDmg] = enemy.dmg;
+        let dmg = Math.floor(Math.random() * (maxDmg - minDmg + 1)) + minDmg;
 
-      if (classKey === "warrior") {
-        const rage01 = getWarriorRage01(playerHPRef.current, maxHPFromPlayer);
-        final = Math.floor(final * warriorDamageInMult(rage01));
-      }
-
-      const petAliveNow = classKey === "archer" && petHP > 0;
-      const taunting = petAliveNow && petTauntTurns > 0;
-
-      if (classKey === "archer" && petAliveNow && !taunting) {
-        if (Math.random() < PET_CFG.GUARD_CHANCE) {
-          final = Math.floor(final * PET_CFG.GUARD_REDUCE_MULT);
-          pushLog("🛡️🐺 Pet Guard! A pet tompította az ütést.");
+        if (defending && defending > 0) {
+          dmg = Math.floor(dmg / 2);
+          setDefending((prev) => Math.max(0, (prev || 1) - 1));
         }
-      }
 
-      if (classKey === "archer" && taunting) {
-        setPetHP((prev) => {
-          const newHP = Math.max(0, prev - final);
-          addHPPopup(-final, "pet");
-          pushLog(`💥 ${enemy.name} a petet üti (${final} sebzés). (Pet: ${newHP}/${petMaxHP})`);
-          return newHP;
-        });
-        setPetTauntTurns((prev) => Math.max(0, prev - 1));
-      } else {
-        setPlayerHP((prev) => {
-          const newHP = Math.max(0, prev - final);
-          addHPPopup(-final, "player");
-          return newHP;
-        });
-        pushLog(`💥 ${enemy.name} támad (${final} sebzés).`);
-      }
+        const finalBase = Math.max(0, dmg - Math.floor((player?.defense ?? 0) / 2));
+        let final = finalBase;
 
-      if (enemyVulnerability && enemyVulnerability.remainingTurns != null) {
-        const remaining = enemyVulnerability.remainingTurns - 1;
-        if (remaining <= 0) { setEnemyVulnerability(null); pushLog("🔮 Az Arcane Surge hatása elmúlt."); }
-        else setEnemyVulnerability((prev) => (prev ? { ...prev, remainingTurns: remaining } : null));
-      }
+        if (classKey === "warrior") {
+          const rage01 = getWarriorRage01(playerHPRef.current, maxHPFromPlayer);
+          final = Math.floor(final * warriorDamageInMult(rage01));
+        }
 
-      if (playerHPRef.current - final <= 0) { endBattle(); return; }
+        const petAliveNow = classKey === "archer" && petHP > 0;
+        const taunting = petAliveNow && petTauntTurns > 0;
 
-      finishEnemyTurnToPlayer();
-    }, boss ? 1400 : 900);
+        if (classKey === "archer" && petAliveNow && !taunting) {
+          if (Math.random() < PET_CFG.GUARD_CHANCE) {
+            final = Math.floor(final * PET_CFG.GUARD_REDUCE_MULT);
+            pushLog("🛡️🐺 Pet Guard! A pet tompította az ütést.");
+          }
+        }
+
+        if (classKey === "archer" && taunting) {
+          setPetHP((prev) => {
+            const newHP = Math.max(0, prev - final);
+            addHPPopup(-final, "pet");
+            pushLog(`💥 ${enemy.name} a petet üti (${final} sebzés). (Pet: ${newHP}/${petMaxHP})`);
+            return newHP;
+          });
+          setPetTauntTurns((prev) => Math.max(0, prev - 1));
+        } else {
+          setPlayerHP((prev) => {
+            const newHP = Math.max(0, prev - final);
+            addHPPopup(-final, "player");
+            return newHP;
+          });
+          pushLog(`💥 ${enemy.name} támad (${final} sebzés).`);
+        }
+
+        if (enemyVulnerability && enemyVulnerability.remainingTurns != null) {
+          const remaining = enemyVulnerability.remainingTurns - 1;
+          if (remaining <= 0) { setEnemyVulnerability(null); pushLog("🔮 Az Arcane Surge hatása elmúlt."); }
+          else setEnemyVulnerability((prev) => (prev ? { ...prev, remainingTurns: remaining } : null));
+        }
+
+        if (playerHPRef.current - final <= 0) { endBattle(); return; }
+
+        finishEnemyTurnToPlayer();
+      }, ENEMY_BASIC_WINDUP_MS));
+
+      return;
+    }, baseDelay);
 
     return () => clearTimeout(t);
   }, [
