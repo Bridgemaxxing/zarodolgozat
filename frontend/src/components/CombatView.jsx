@@ -517,7 +517,21 @@ function FadeOverlay({ isOpen, onMid, onDone, inMs = 220, holdMs = 120, outMs = 
 }
 
 
-export default function CombatView({ level = 1, boss = false, enemies = [], background, pathType = "fight", onEnd, wave= 1, maxWaves=16 }) {
+// Optional prop: `playerHP` can be passed from the parent (e.g. GameController).
+// If provided, CombatView will prefer it over sessionStorage when initializing HP,
+// and it will also sync it into sessionStorage. This prevents starting every combat
+// from an old stored low HP value after you full-heal in the Hub.
+export default function CombatView({
+  level = 1,
+  boss = false,
+  enemies = [],
+  background,
+  pathType = "fight",
+  onEnd,
+  wave = 1,
+  maxWaves = 16,
+  playerHP: playerHPProp,
+}) {
   const {
     player,
     setPlayer,
@@ -532,7 +546,9 @@ export default function CombatView({ level = 1, boss = false, enemies = [], back
 
   // hp max elsőnek
   const firstInitRef = useRef(true);
-  const hpHydratedRef = useRef(false); // ✅ új
+
+  // ✅ HP persistence guard (sessionStorage)
+  const hpHydratedRef = useRef(false);
 
   // ✅ ANCHOR REF-ek a VFX-hez
   const combatRootRef = useRef(null);
@@ -588,16 +604,15 @@ export default function CombatView({ level = 1, boss = false, enemies = [], back
     return Number.isFinite(n) ? n : null;
   }
 
-useEffect(() => {
-  if (!hpStoreKey) return;
-  if (battleOverRef.current) return;
+  // ✅ Persist current HP into sessionStorage (so it survives wave-to-wave remounts)
+  useEffect(() => {
+    if (!hpStoreKey) return;
+    if (!hpHydratedRef.current) return; // don't overwrite before we loaded once
+    if (battleOverRef.current) return;
 
-  // ✅ amíg nem olvastuk be először a storage HP-t, ne írjunk rá
-  if (!hpHydratedRef.current) return;
-
-  const clamped = Math.max(0, Math.min(playerHP, maxHPFromPlayer));
-  writeStoredHP(clamped);
-}, [playerHP, maxHPFromPlayer, hpStoreKey]);
+    const clamped = Math.max(0, Math.min(playerHP, maxHPFromPlayer));
+    writeStoredHP(clamped);
+  }, [playerHP, maxHPFromPlayer, hpStoreKey]);
 
   function writeStoredHP(hp) {
     if (!hpStoreKey) return;
@@ -966,15 +981,26 @@ useEffect(() => {
       // ✅ RUN HP: ha van mentett HP (és >0), onnan indulunk, különben max HP
       // (mount/unmount esetén sem resetel maxra)
       if (firstInitRef.current) {
+        const propHp = Number.isFinite(Number(playerHPProp)) ? Number(playerHPProp) : null;
         const stored = readStoredHP();
-        const startHp =
-          stored != null && stored > 0
-            ? Math.min(stored, maxHPFromPlayer)
+
+        // Priority: parent-provided HP (e.g. hub full-heal) -> sessionStorage -> maxHP
+        const startHpRaw =
+          propHp != null && propHp > 0
+            ? propHp
+            : stored != null && stored > 0
+            ? stored
             : maxHPFromPlayer;
+
+        const startHp = Math.max(0, Math.min(startHpRaw, maxHPFromPlayer));
 
         setPlayerHP(startHp);
         playerHPRef.current = startHp;
+
+        // mark hydrated + sync storage immediately so strict-mode remount can't reset us
         hpHydratedRef.current = true;
+        writeStoredHP(startHp);
+
         firstInitRef.current = false;
       }
 
@@ -1754,8 +1780,7 @@ async function handleContinue() {
   const victory = enemyHP <= 0 && playerHP > 0;
   const isRunEnd = (!victory) || (wave >= maxWaves);
 
-  // ✅ WAVE COMPLETE (nem run vége): vissza Path-ra,
-  // HP marad + storage már frissül a useEffect miatt
+  // ✅ WAVE COMPLETE (nem run vége): vissza Path-ra, HP marad, storage marad
   if (!isRunEnd) {
     clearAllVfx();
     onEnd?.(playerHPRef.current, true);
@@ -1781,7 +1806,7 @@ async function handleContinue() {
     return;
   }
 
-  // ===== VICTORY UTOLSÓ WAVE: reward + HUB + FULL HEAL =====
+  // ===== VICTORY UTOLSÓ WAVE: reward + quest + HUB + FULL HEAL =====
 
   // ha nincs player.id, akkor backend nélkül is mehetünk HUB-ba full HP-val
   if (!player?.id) {
@@ -1796,10 +1821,10 @@ async function handleContinue() {
     return;
   }
 
-  // ✅ MINDEN WAVE UTÁN REWARD: ha ezt akarod,
-  // akkor ezt a részt vidd feljebb, és futtasd a "nem run end" ágban is.
   const { xpGain, goldGain } = rollRewards();
 
+  // ✅ BACKEND REWARD -> ment + level up + statpont
+  // (FULL HP-t mentünk a DB-be, mert hubba megyünk)
   let res, data;
   try {
     res = await fetch("http://localhost:3000/api/combat/reward", {
@@ -1809,12 +1834,14 @@ async function handleContinue() {
         playerId: player.id,
         xpGain,
         goldGain,
-        hpAfterBattle: fullMax, // run end -> full HP mentés
+        hpAfterBattle: fullMax,
       }),
     });
+
     data = await res.json();
   } catch (err) {
     console.error("combat/reward fetch error:", err);
+    // ha a mentés fail, attól még HUB-ba full heal
     setPlayerHP(fullMax);
     playerHPRef.current = fullMax;
     setPlayer((prev) => ({ ...(prev || {}), hp: fullMax }));
@@ -1824,9 +1851,12 @@ async function handleContinue() {
 
   if (!res.ok || !data?.success) {
     console.error("combat/reward failed", data);
+
+    // ha a reward mentés fail, attól még HUB-ba full heal
     setPlayerHP(fullMax);
     playerHPRef.current = fullMax;
     setPlayer((prev) => ({ ...(prev || {}), hp: fullMax }));
+
     onEnd?.(fullMax, true);
     return;
   }
@@ -1834,9 +1864,36 @@ async function handleContinue() {
   // backend visszaad updated base player row-t
   setPlayer((prev) => ({ ...(prev || {}), ...(data.player || {}), hp: fullMax }));
 
+  // ✅ frissítsük a derived statokat is (item bónuszok miatt)
   try {
     await refreshFullStats(player.id);
   } catch {}
+
+  // quest progress (maradhat ahogy van)
+  try {
+    const playerId = player.id;
+    const taskType = boss ? "boss" : "kill";
+
+    await fetch("http://localhost:3000/api/quests/progress", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ playerId, taskType }),
+    });
+
+    await fetch("http://localhost:3000/api/quests/progress", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ playerId, taskType: "custom" }),
+    });
+
+    await fetch("http://localhost:3000/api/quests/check", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ playerId }),
+    });
+  } catch (err) {
+    console.error("Quest progress frissítés hiba:", err);
+  }
 
   // ✅ HUB-ba megyünk full HP-val
   setPlayerHP(fullMax);

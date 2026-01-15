@@ -136,11 +136,10 @@ export default function GameController() {
       {view === "combat" && pendingCombatProps && (
         <CombatView
           // ✅ FONTOS: Date.now() NINCS! különben folyton remount = reset
-          key={`${pendingCombatProps.boss ? "boss" : "fight"}-${pathType ?? "fight"}`}
           level={pendingCombatProps.level}
           boss={pendingCombatProps.boss}
-          playerHP={playerHP}
           wave={level}
+          playerHP={playerHP}
           maxWaves={MAX_WAVES}
           onEnd={(newHP, victory) => handleBattleEnd(newHP, victory)}
         />
