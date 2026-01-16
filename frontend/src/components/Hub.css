@@ -50,11 +50,11 @@
 
 
 .hub-camera {
-  width: 120vw;
-  height: 120vh;
   position: absolute;
-  left: -10vw;
-  top: -10vh;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  will-change: transform;
 }
 
 .hub-map {
@@ -62,4 +62,20 @@
   inset: 0;
   background-size: cover;
   background-position: center;
+}
+
+.hub-zooming {
+  animation: hubZoomFX 0.6s ease-out forwards;
+}
+
+@keyframes hubZoomFX {
+  0% {
+    filter: blur(0px) brightness(1);
+  }
+  30% {
+    filter: blur(3px) brightness(0.8);
+  }
+  100% {
+    filter: blur(0px) brightness(1);
+  }
 }

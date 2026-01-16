@@ -9,7 +9,8 @@ import "./Hub.css";
 
 export default function Hub({ onGoAdventure }) {
   const { player } = usePlayer();
-
+  const clamp = (value, min, max) =>
+  Math.min(Math.max(value, min), max);
   const [playerPos, setPlayerPos] = useState({ x: 40, y: 75 });
   const [isMoving, setIsMoving] = useState(false);
 
@@ -18,10 +19,11 @@ export default function Hub({ onGoAdventure }) {
   const [showInv, setShowInv] = useState(false);
   const [showQuestBoard, setShowQuestBoard] = useState(false);
   const [isAdventuring, setIsAdventuring] = useState(false);
-
+  const hubRef = useRef(null);
   /** ZOOM STATE */
   const [zoom, setZoom] = useState(1);
   const [offset, setOffset] = useState({ x: 0, y: 0 });
+  const [isZooming, setIsZooming] = useState(false);
 
   const timeoutRef = useRef(null);
 
@@ -29,29 +31,41 @@ export default function Hub({ onGoAdventure }) {
 
   /** BETÖLTÉSKORI ZOOM */
   useEffect(() => {
-    setZoom(1.5);
+    setZoom(1);
     setTimeout(() => setZoom(1), 100);
   }, []);
 
   /** KAMERA ZOOM EGY PONTRA */
-  const zoomTo = (xPercent, yPercent, zoomLevel = 1.6) => {
+  const zoomTo = (xPercent, yPercent, zoomLevel = 1) => {
+  if (!hubRef.current) return;
+
   const vw = window.innerWidth;
   const vh = window.innerHeight;
 
-  // cél pozíció pixelben
-  const targetX = (xPercent / 100) * vw;
-  const targetY = (yPercent / 100) * vh;
+  const worldW = hubRef.current.offsetWidth;
+  const worldH = hubRef.current.offsetHeight;
 
-  // viewport közepe
+  const targetX = (xPercent / 100) * worldW;
+  const targetY = (yPercent / 100) * worldH;
+
   const centerX = vw / 2;
   const centerY = vh / 2;
 
-  // eltolás számítása (scale kompenzációval!)
-  const x = (centerX - targetX) / zoomLevel;
-  const y = (centerY - targetY) / zoomLevel;
+  let offsetX = (centerX - targetX * zoomLevel) / zoomLevel;
+  let offsetY = (centerY - targetY * zoomLevel) / zoomLevel;
+
+  // 🔒 CLAMP – EZ OLDJA MEG A CSÍKOSODÁST
+  const maxX = 0;
+  const maxY = 0;
+
+  const minX = vw - worldW * zoomLevel;
+  const minY = vh - worldH * zoomLevel;
+
+  offsetX = clamp(offsetX, minX / zoomLevel, maxX);
+  offsetY = clamp(offsetY, minY / zoomLevel, maxY);
 
   setZoom(zoomLevel);
-  setOffset({ x, y });
+  setOffset({ x: offsetX, y: offsetY });
 };
 
   const resetZoom = () => {
@@ -61,6 +75,7 @@ export default function Hub({ onGoAdventure }) {
 
   /** MOZGÁS + MODAL */
   const moveTo = (x, y, type) => {
+    setIsZooming(true);
     zoomTo(x, y);
 
     const dx = x - playerPos.x;
@@ -96,11 +111,11 @@ export default function Hub({ onGoAdventure }) {
     <div className="fixed inset-0 overflow-hidden bg-black text-white">
       {/* ZOOMOLHATÓ HUB */}
       <div
-         className={`w-full h-full transition-transform duration-[1200ms] ease-in-out ${
-    isMoving ? "hub-motion" : ""
+          ref={hubRef} className={`hub-camera transition-transform duration-[1200ms] ease-in-out ${
+    isZooming ? "hub-zooming" : ""
   }`}
         style={{
-          transform: `scale(${zoom}) translate(${offset.x}px, ${offset.y}px)`,
+          transform: `translate(${offset.x}px, ${offset.y}px) scale(${zoom})`,
           transformOrigin: "center center",
           backgroundImage: `url("./src/assets/pics/HUB.png")`,
           backgroundSize: "cover",
@@ -125,8 +140,8 @@ export default function Hub({ onGoAdventure }) {
 
         <div
           className="absolute cursor-pointer group"
-          style={{ right: "20%", bottom: "10%", width: "330px", height: "450px" }}
-          onClick={() => moveTo(65, 80, "shop")}
+          style={{ right: "20%", bottom: "10%", width: "330px", height: "270px" }}
+          onClick={() => moveTo(65, 80, "quest")}
         >
           <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition"></div>
         </div>
@@ -134,15 +149,15 @@ export default function Hub({ onGoAdventure }) {
         <div
           className="absolute cursor-pointer group"
           style={{ right: "5%", bottom: "10%", width: "280px", height: "250px" }}
-          onClick={() => moveTo(85, 85, "inv")}
+          onClick={() => moveTo(85, 85, "shop")}
         >
           <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition"></div>
         </div>
 
         <div
           className="absolute cursor-pointer group"
-          style={{ right: "40%", top: "10%", width: "320px", height: "220px" }}
-          onClick={() => moveTo(50, 80, "quest")}
+          style={{ right: "20%", bottom: "35%", width: "330px", height: "270px" }}
+          onClick={() => moveTo(60, 80, "inv")}
         >
           <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition"></div>
         </div>
