@@ -487,6 +487,7 @@ export default function Inv({ onClose }) {
                         {inventoryItems.map((item) => {
                             const isSelected = selectedItem?.item_id === item.item_id;
                             const ui = rarityUi(item.rarity);
+
                           return (
                             <button
                               key={item.item_id}
@@ -500,19 +501,7 @@ export default function Inv({ onClose }) {
                                 isSelected ? "ring-2 ring-yellow-400" : "",
                               ].join(" ")}
                               title="Kattints a részletekhez"
-                            key={item.item_id}
-                                  onClick={() => setSelectedItem(item)}
-                                  className={[
-                                    "h-20 rounded-lg border text-left px-3",
-                                    "bg-neutral-900/40 hover:bg-neutral-900",
-                                    // rarity border (alap)
-                                    ui.border,
-                                    // equipped: maradhat zöld, vagy ha akarod rarity-vel is mehet (lásd lent)
-                                    item.is_equipped ? "border-emerald-600" : "",
-                                    // selected ring rarity alapján
-                                    isSelected ? `ring-2 ${ui.ring}` : "",
-                                  ].join(" ")}
-                                  title="Kattints a részletekhez"
+
                             >
                               <div className=" truncate">
                                 {item.name}
