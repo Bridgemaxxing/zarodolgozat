@@ -1,6 +1,7 @@
 // frontend/src/components/StatModal.jsx
 import React, { useMemo, useState } from "react";
 import { usePlayer } from "../context/PlayerContext.jsx";
+import "./StatModal.css";
 
 function xpToNextLevel(level) {
   if (level <= 1) return 30;
@@ -93,22 +94,18 @@ export default function StatModal({ onClose }) {
 
   return (
     <div className="absolute inset-0 bg-black/80 flex items-center justify-center z-50">
-      <div className="bg-gray-900 p-8 rounded-2xl shadow-xl w-1/2 text-white">
-        <h2 className="text-xl font-bold mb-4 text-center">Stat Fejlesztés</h2>
+      <div className="StatDiv p-8">
+        <h2 className="StatCim text-center">Stat Fejlesztés</h2>
 
-        <div className="mb-2 text-center">
+        <div className="Szint text-center">
           Szint: {player.level} — XP: {player.xp} / {xpToNextLevel(player.level)}
         </div>
 
-        <div className="mb-3 text-center text-cyan-200 font-mono">
-          HP: {view.hpText}
-        </div>
-
-        <div className="mb-6 text-center text-green-400">
+        <div className="Pontok text-center">
           Elosztható pontok: {unspent}
         </div>
 
-        <div className="grid grid-cols-2 gap-4 text-center">
+        <div className="StatGrid grid grid-cols-2 gap-4 text-center">
           <StatRow
             label="Erő (STR)"
             value={view.strText}
@@ -137,7 +134,7 @@ export default function StatModal({ onClose }) {
 
         <div className="mt-6 text-center">
           <button
-            className="px-6 py-2 bg-red-700 rounded-xl hover:bg-red-600"
+            className="Bezaras px-6 py-2"
             onClick={onClose}
           >
             Bezárás
@@ -150,16 +147,16 @@ export default function StatModal({ onClose }) {
 
 function StatRow({ label, value, onPlus, disabled }) {
   return (
-    <div className="bg-black/40 border border-gray-700 rounded p-3">
-      <div className="mb-2 font-semibold">{label}</div>
+    <div className="StatGridElements p-3">
+      <div className="mb-2">{label}</div>
       <div className="mb-3 text-xl">{value}</div>
       <button
         onClick={onPlus}
         disabled={disabled}
-        className={`px-3 py-1 rounded ${
+        className={`px-3 py-1 ${
           disabled
-            ? "bg-gray-600 cursor-not-allowed"
-            : "bg-emerald-700 hover:bg-emerald-600"
+            ? "StatNotAllowed bg-gray-600 cursor-not-allowed"
+            : "StatAllowed cursor-cell"
         }`}
       >
         +

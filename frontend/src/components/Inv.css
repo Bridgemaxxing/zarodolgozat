@@ -211,3 +211,30 @@
      transform: translateY(5px);
      box-shadow: 0px 5px black, 0px -5px black, 5px 0px black, -5px 0px black,inset 0px 5px #00000038;
 }
+
+.invInvItemGrids{
+    box-shadow: 0px 3px black, 0px -3px black, 3px 0px black, -3px 0px black,inset 0px 3px #00000038, inset 0px 5px #ffffff36;
+    background-color: #460809;
+}
+
+/* ===== ITEM RARITY TEXT COLORS ===== */
+
+.rarity-common {
+  color: #9ca3af; /* gray-400 */
+}
+
+.rarity-uncommon {
+  color: #4ade80; /* green-400 */
+}
+
+.rarity-rare {
+  color: #60a5fa; /* blue-400 */
+}
+
+.rarity-epic {
+  color: #c084fc; /* purple-400 */
+}
+
+.rarity-legendary {
+  color: #facc15; /* yellow-400 */
+}

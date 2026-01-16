@@ -1,0 +1,74 @@
+.StatDiv{
+    box-shadow: 0px 5px black, 0px -5px black, 5px 0px black, -5px 0px black,inset 0px 5px #00000038;
+    background-color: #460809;
+}
+
+.StatCim{
+    font-family: "Jersey 10", sans-serif;
+    color: #fef9c2;
+    text-transform: uppercase;
+    font-size: 40px;
+    letter-spacing: 3px;
+    text-shadow: 2px 2px 0px #888562;
+}
+
+.Szint{
+    font-family: "Jersey 10", sans-serif;
+    color: #fef9c2;
+    font-size: 20px;
+}
+
+.Pontok{
+    font-family: "Jersey 10", sans-serif;
+    color: #fef9c2;
+    font-size: 20px;
+}
+
+.StatGridElements{
+    font-family: "Jersey 10", sans-serif;
+    color: #fef9c2;
+    box-shadow: 0px 5px black, 0px -5px black, 5px 0px black, -5px 0px black, 0px 10px #00000038, 5px 5px #00000038, -5px 5px #00000038, inset 0px 5px #ffffff36;
+    background-color: #290f0f;
+}
+
+.StatAllowed{
+    color: #fef9c2;
+     background-color: #0d5c11;
+     font-size: 20px;
+     font-family: "Jersey 10", sans-serif;
+     border: 0;
+     box-shadow: 0px 5px black, 0px -5px black, 5px 0px black, -5px 0px black, 0px 10px #00000038, 5px 5px #00000038, -5px 5px #00000038, inset 0px 5px #ffffff36;
+     cursor: pointer;
+     width: 40px;
+}
+
+.StatAllowed:active {
+     transform: translateY(5px);
+     box-shadow: 0px 5px black, 0px -5px black, 5px 0px black, -5px 0px black,inset 0px 5px #00000038;
+}
+
+.StatNotAllowed{
+    color: #fef9c2;
+     background-color: #414141;
+     font-size: 20px;
+     font-family: "Jersey 10", sans-serif;
+     border: 0;
+     box-shadow: 0px 5px black, 0px -5px black, 5px 0px black, -5px 0px black, 0px 10px #00000038, 5px 5px #00000038, -5px 5px #00000038, inset 0px 5px #ffffff36;
+     cursor: pointer;
+     width: 40px;
+}
+
+.Bezaras{
+    color: #fef9c2;
+     background-color: #460809;
+     font-size: 20px;
+     font-family: "Jersey 10", sans-serif;
+     border: 0;
+     box-shadow: 0px 5px black, 0px -5px black, 5px 0px black, -5px 0px black, 0px 10px #00000038, 5px 5px #00000038, -5px 5px #00000038, inset 0px 5px #ffffff36;
+     cursor: pointer;
+}
+
+.Bezaras:active {
+     transform: translateY(5px);
+     box-shadow: 0px 5px black, 0px -5px black, 5px 0px black, -5px 0px black,inset 0px 5px #00000038;
+}

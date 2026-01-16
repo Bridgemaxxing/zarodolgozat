@@ -42,11 +42,11 @@ function resolveCardImageFromAbility(ab) {
 }
 
 const EQUIP_SLOTS = [
-  { key: "weapon", label: "Weapon" },
-  { key: "armor", label: "Chest" },
-  { key: "helmet", label: "Head" },
-  { key: "accessory", label: "Accessory" },
-  { key: "accessory", label: "Accessory" },
+  { key: "weapon", label: "Fegyver" },
+  { key: "armor", label: "Mellvért" },
+  { key: "helmet", label: "Sisak" },
+  { key: "accessory", label: "Kiegészítő 1" },
+  { key: "accessory", label: "Kiegészítő 2" },
 ];
 
 function mapItemTypeToSlot(type) {
@@ -355,12 +355,12 @@ export default function Inv({ onClose }) {
     const hpText = `${finalHp} / ${finalMaxHp}`;
 
     return [
-      { label: "Level", value: player.level ?? 1 },
-      { label: "HP", value: hpBonus ? `${hpText} (+${hpBonus})` : hpText },
-      { label: "Strength", value: formatWithBonus(finalStr, itemBonuses?.strength ?? 0) },
-      { label: "Intellect", value: formatWithBonus(finalInt, itemBonuses?.intellect ?? 0) },
-      { label: "Defense", value: formatWithBonus(finalDef, itemBonuses?.defense ?? 0) },
-      { label: "Gold", value: player.gold ?? 0 },
+      { label: "Szint", value: player.level ?? 1 },
+      { label: "Életerő", value: hpBonus ? `${hpText} (+${hpBonus})` : hpText },
+      { label: "Erő", value: formatWithBonus(finalStr, itemBonuses?.strength ?? 0) },
+      { label: "Intelligencia", value: formatWithBonus(finalInt, itemBonuses?.intellect ?? 0) },
+      { label: "Védelem", value: formatWithBonus(finalDef, itemBonuses?.defense ?? 0) },
+      { label: "Arany", value: player.gold ?? 0 },
     ];
   }, [player, effectiveStats, itemBonuses]);
 
@@ -405,26 +405,23 @@ export default function Inv({ onClose }) {
               <div className="h-full grid grid-cols-12 gap-6 min-h-0">
                 <div className="col-span-2 flex flex-col gap-3 min-h-0">
                   <div className="invEquipmentText">
-                    Equipment
+                    Felszerelés
                   </div>
 
                   {EQUIP_SLOTS.map((slot) => {
                     const equipped = equippedBySlot[slot.key];
                     const ui = equipped ? rarityUi(equipped.rarity) : rarityUi("common");
+
                     return (
                       <button
                         key={slot.key}
                         onClick={() => {
                           if (equipped) setSelectedItem(equipped);
                         }}
-                        
                         className={[
                           "h-20",
                           "invEquipedItems flex flex-col justify-center px-3 text-left",
                           equipped ? "invEquipedItemsEquipped" : "invEquipedItemsUnEquipped",
-                           "",
-                          "flex flex-col justify-center px-3 text-left",
-                          "",
                           equipped ? ui.border : "border-neutral-700",
                         ].join(" ")}
                         title={equipped ? "Kattints a részletekhez" : "Üres slot"}
@@ -432,10 +429,19 @@ export default function Inv({ onClose }) {
                         <div className="invEquipedItemType">
                           {slot.label}
                         </div>
+
                         <div className="invEquipedItemName">
                           {equipped ? equipped.name : "Üres"}
                         </div>
-                        <div className="invEquipedItemRarity">
+
+                        <div
+                          className={[
+                            "invEquipedItemRarity uppercase text-[10px]",
+                            equipped
+                              ? `rarity-${equipped.rarity.toLowerCase()}`
+                              : "",
+                          ].join(" ")}
+                        >
                           {equipped ? equipped.rarity : ""}
                         </div>
                       </button>
@@ -448,7 +454,7 @@ export default function Inv({ onClose }) {
                     {player.username}
                   </div>
                   <div className="invCharacterImg mt-3 flex-1 min-h-0 flex items-center justify-center">
-                    <div className="text-neutral-600">(placeholder)</div>
+                    <div className="">(placeholder)</div>
                   </div>
                 </div>
 
@@ -490,36 +496,43 @@ export default function Inv({ onClose }) {
                             
                           return (
                             <button
-                              key={item.item_id}
-                              onClick={() => setSelectedItem(item)}
-                              className={[
-                                "h-20 border text-left px-3",
-                                "bg-neutral-900/40 hover:bg-neutral-900",
-                                item.is_equipped
-                                  ? "border-rose-950"
-                                  : "border-neutral-700",
-                                isSelected ? "ring-2 ring-yellow-400" : "",
-                              ].join(" ")}
-                              title="Kattints a részletekhez"
+                                key={item.item_id}
+                                onClick={() => setSelectedItem(item)}
+                                className={[
+                                  "h-20 text-left px-3",
+                                  "invInvItemGrids hover:bg-neutral-900",
+                                  item.is_equipped
+                                    ? "border-rose-950"
+                                    : "border-neutral-700",
+                                  isSelected ? "ring-2 ring-yellow-400" : "",
+                                ].join(" ")}
+                                title="Kattints a részletekhez"
+                              >
+                                <div className="truncate">
+                                  {item.name}
+                                </div>
 
-                            >
-                              <div className=" truncate">
-                                {item.name}
-                              </div>
-                              <div className="text-[10px] text-neutral-400 uppercase"> {/*RARITY ALAPJÁN SZÍN*/}
-                                {item.type} • {item.rarity}
-                              </div>
-                              {item.upgrade_level > 0 && (
-                                <div className="text-[10px] text-yellow-300 uppercase mt-1">
-                                  +{item.upgrade_level}
+                                <div
+                                  className={[
+                                    "text-[10px] uppercase",
+                                    `rarity-${item.rarity?.toLowerCase() || "common"}`,
+                                  ].join(" ")}
+                                >
+                                  {item.type} • {item.rarity}
                                 </div>
-                              )}
-                              {item.is_equipped && (
-                                <div className="text-[10px] text-emerald-400 uppercase mt-1">
-                                  Equipped
-                                </div>
-                              )}
-                            </button>
+
+                                {item.upgrade_level > 0 && (
+                                  <div className="text-[10px] text-yellow-300 uppercase mt-1">
+                                    +{item.upgrade_level}
+                                  </div>
+                                )}
+
+                                {item.is_equipped && (
+                                  <div className="text-[10px] text-emerald-400 uppercase mt-1">
+                                    Equipped
+                                  </div>
+                                )}
+                              </button>
                           );
                         })}
                       </div>
@@ -543,10 +556,10 @@ export default function Inv({ onClose }) {
                         </div>
 
                         <div className="invInvSelectedItemStat space-y-1">
-                          {formatBonusLine("Strength", selectedItem.bonus_strength)}
-                          {formatBonusLine("Intellect", selectedItem.bonus_intellect)}
-                          {formatBonusLine("Defense", selectedItem.bonus_defense)}
-                          {formatBonusLine("HP", selectedItem.bonus_hp)}
+                          {formatBonusLine("Erő", selectedItem.bonus_strength)}
+                          {formatBonusLine("intelligencia", selectedItem.bonus_intellect)}
+                          {formatBonusLine("Védelem", selectedItem.bonus_defense)}
+                          {formatBonusLine("Életerő", selectedItem.bonus_hp)}
                         </div>
 
                         <div className="flex gap-2">

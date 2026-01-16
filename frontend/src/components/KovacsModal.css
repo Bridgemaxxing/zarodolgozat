@@ -1,7 +1,52 @@
-.kovacs{
-    position: fixed;
-    margin: auto;
+.kovacs {
+  position: fixed;
+  margin: auto;
+
+  box-shadow:
+    0px 5px black,
+    0px -5px black,
+    5px 0px black,
+    -5px 0px black,
+    0px 10px #00000038,
+    5px 5px #00000038,
+    -5px 5px #00000038;
+
+  overflow: hidden; /* fontos a vignette-hez */
 }
+
+/* ===== PULZÁLÓ SÁRGA VIGNETTE ===== */
+
+.kovacs::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+
+  background: radial-gradient(
+    ellipse at center,
+    rgba(0, 0, 0, 0) 45%,
+    rgba(250, 124, 21, 0.25) 70%,
+    rgba(180, 85, 7, 0.55) 100%
+  );
+
+  animation: vignettePulse 1s ease-in-out infinite;
+}
+
+@keyframes vignettePulse {
+  0% {
+    opacity: 0.35;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.55;
+    transform: scale(1.02);
+  }
+  100% {
+    opacity: 0.35;
+    transform: scale(1);
+  }
+}
+
 
 .kilepes{
     color: #fef9c2;

@@ -198,7 +198,7 @@ export default function BlacksmithModal({ onClose }) {
   return (
     <div className="fixed inset-0 bg-black/70 flex justify-center z-50">
       <div
-        className="kovacs relative w-[85%] h-[85%] flex-col shadow-xl p-6 text-white"
+        className="kovacs relative w-[85%] h-[85%] flex-col p-6"
         style={{
           backgroundImage: "url('./src/assets/pics/KOVACS.png')",
           backgroundSize: "cover",
