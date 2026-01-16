@@ -422,9 +422,9 @@ export default function Inv({ onClose }) {
                           "h-20",
                           "invEquipedItems flex flex-col justify-center px-3 text-left",
                           equipped ? "invEquipedItemsEquipped" : "invEquipedItemsUnEquipped",
-                           "h-20 rounded-lg border",
+                           "",
                           "flex flex-col justify-center px-3 text-left",
-                          "bg-neutral-900/50 hover:bg-neutral-900",
+                          "",
                           equipped ? ui.border : "border-neutral-700",
                         ].join(" ")}
                         title={equipped ? "Kattints a részletekhez" : "Üres slot"}
