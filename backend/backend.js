@@ -113,12 +113,16 @@ app.get("/api/inventory/:playerId", (req, res) => {
   pool.query(
     `
     SELECT 
+      b.id AS owned_id,
       b.item_id,
+      b.quantity,
       b.is_equipped,
       b.upgrade_level,
+
       i.name,
       i.type,
       i.rarity,
+      i.prize,
       i.bonus_strength,
       i.bonus_intellect,
       i.bonus_defense,
@@ -134,6 +138,7 @@ app.get("/api/inventory/:playerId", (req, res) => {
     }
   );
 });
+
 
 app.get("/api/player/:id/full-stats", (req, res) => {
   const playerId = req.params.id;
@@ -688,54 +693,118 @@ app.post("/api/combat/reward", (req, res) => {
 
 {/*Vesz*/}
 
-
-
 app.post("/api/shop/buy", (req, res) => {
-    const { playerId, itemId } = req.body;
+  const { playerId, itemId } = req.body;
 
-    // 1. Játékos lekérdezése
-    pool.query("SELECT gold FROM players WHERE id = ?", [playerId], (err, players) => {
-        if (err) return res.status(500).json({ error: "DB hiba" });
-        if (players.length === 0) return res.status(404).json({ error: "Nincs ilyen játékos" });
+  pool.query(
+    "SELECT gold FROM players WHERE id = ?",
+    [playerId],
+    (err, players) => {
+      if (err) return res.status(500).json({ error: "DB hiba" });
+      if (players.length === 0)
+        return res.status(404).json({ error: "Nincs ilyen játékos" });
 
-        const gold = players[0].gold;
+      pool.query(
+        "SELECT prize, type FROM items WHERE id = ?",
+        [itemId],
+        (err, itemRes) => {
+          if (err) return res.status(500).json({ error: "DB hiba" });
+          if (itemRes.length === 0)
+            return res.status(404).json({ error: "Item nem található" });
 
-        // 2. Tárgy lekérdezése
-        pool.query("SELECT prize FROM items WHERE id = ?", [itemId], (err, itemRes) => {
-            if (err) return res.status(500).json({ error: "DB hiba" });
-            if (itemRes.length === 0) return res.status(404).json({ error: "Tárgy nem található" });
+          const { prize, type } = itemRes[0];
+          if (players[0].gold < prize)
+            return res.status(400).json({ error: "Nincs elég arany" });
 
-            const prize = itemRes[0].prize;
+          // 🔒 CHECK: már van-e ilyen item
+          pool.query(
+            "SELECT id FROM birtokol WHERE player_id = ? AND item_id = ?",
+            [playerId, itemId],
+            (err, owned) => {
+              if (err) return res.status(500).json({ error: "DB hiba" });
 
-            // 3. Ellenőrzés
-            if (gold < prize) {
-                return res.status(400).json({ error: "Nincs elég arany" });
-            }
+              if (owned.length > 0 && type !== "potion") {
+                return res.status(400).json({ error: "Ez az item már megvan" });
+              }
 
-            // 4. Arany levonás
-            pool.query(
+              pool.query(
                 "UPDATE players SET gold = gold - ? WHERE id = ?",
                 [prize, playerId],
                 err => {
-                    if (err) return res.status(500).json({ error: "DB hiba arany levonásakor" });
-                    
-                    // 5. Item hozzáadás
-                    pool.query(
-                        `INSERT INTO birtokol (player_id, item_id, quantity)
-                         VALUES (?, ?, 1)
-                         ON DUPLICATE KEY UPDATE quantity = quantity + 1`,
-                        [playerId, itemId],
-                        err => {
-                            if (err) return res.status(500).json({ error: "DB hiba tárgy hozzáadásakor" });
+                  if (err) return res.status(500).json({ error: "Arany hiba" });
 
-                            return res.json({ success: true, message: "Sikeres vásárlás" });
-                        }
-                    );
+                  pool.query(
+                    `
+                    INSERT INTO birtokol (player_id, item_id, quantity)
+                    VALUES (?, ?, 1)
+                    ON DUPLICATE KEY UPDATE quantity = quantity + 1
+                    `,
+                    [playerId, itemId],
+                    err => {
+                      if (err) return res.status(500).json({ error: "Inventory hiba" });
+                      res.json({ success: true });
+                    }
+                  );
                 }
-            );
-        });
-    });
+              );
+            }
+          );
+        }
+      );
+    }
+  );
 });
+
+
+{/*Elad*/}
+
+app.post("/api/shop/sell", (req, res) => {
+  const { playerId, itemId } = req.body;
+
+  // 1. Ellenőrizzük, hogy birtokolja-e
+  pool.query(
+    "SELECT * FROM birtokol WHERE player_id = ? AND item_id = ?",
+    [playerId, itemId],
+    (err, owned) => {
+      if (err) return res.status(500).json({ error: "DB hiba" });
+      if (owned.length === 0)
+        return res.status(400).json({ error: "Nincs ilyen tárgyad" });
+
+      // 2. Item ár lekérdezése
+      pool.query(
+        "SELECT prize FROM items WHERE id = ?",
+        [itemId],
+        (err, itemRes) => {
+          if (err) return res.status(500).json({ error: "DB hiba" });
+
+          const sellPrice = Math.floor(itemRes[0].prize * 0.9);
+
+          // 3. Item törlése inventoryból
+          pool.query(
+            "DELETE FROM birtokol WHERE player_id = ? AND item_id = ?",
+            [playerId, itemId],
+            err => {
+              if (err) return res.status(500).json({ error: "DB hiba törléskor" });
+
+              // 4. Gold visszaadása
+              pool.query(
+                "UPDATE players SET gold = gold + ? WHERE id = ?",
+                [sellPrice, playerId],
+                err => {
+                  if (err)
+                    return res.status(500).json({ error: "DB hiba gold frissítéskor" });
+
+                  res.json({ success: true, gold: sellPrice });
+                }
+              );
+            }
+          );
+        }
+      );
+    }
+  );
+});
+
 
 
 {/* fejleszt – GOLD alapú, nem XP */}
