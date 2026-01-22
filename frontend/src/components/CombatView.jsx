@@ -1080,8 +1080,6 @@ for (let i = 0; i < enemyCount; i++) {
 
 const currentEnemy = generatedEnemies[0];
 const remainingEnemies = generatedEnemies.slice(1);
-console.log("DEBUG: Összes generált:", generatedEnemies.length); // Ennek 2-nek kell lennie
-console.log("DEBUG: Várakozók:", remainingEnemies.length); // Ennek 1-nek kell lennie
 setEnemy(currentEnemy);
 setEnemyHP(currentEnemy.maxHp);
 enemyHPRef.current = currentEnemy.maxHp;
