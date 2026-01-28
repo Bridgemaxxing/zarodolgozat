@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Gép: 127.0.0.1
--- Létrehozás ideje: 2026. Jan 23. 11:00
+-- Létrehozás ideje: 2026. Jan 28. 10:09
 -- Kiszolgáló verziója: 10.4.28-MariaDB
 -- PHP verzió: 8.2.4
 
@@ -117,11 +117,17 @@ INSERT INTO `birtokol` (`id`, `player_id`, `item_id`, `quantity`, `upgrade_level
 (85, 31, 14, 1, 1, 1, 1),
 (86, 31, 28, 1, 0, 1, 1),
 (87, 31, 31, 1, 0, 1, 1),
-(88, 32, 5, 1, 29, 0, 1),
+(88, 32, 5, 1, 29, 1, 1),
 (89, 32, 27, 1, 0, 0, 2),
-(90, 32, 26, 1, 11, 0, 1),
+(90, 32, 26, 1, 40, 1, 1),
 (91, 32, 28, 1, 0, 0, 1),
-(92, 32, 29, 1, 0, 0, 2);
+(92, 32, 29, 1, 0, 1, 2),
+(93, 32, 8, 1, 0, 0, 1),
+(94, 32, 16, 1, 0, 0, 1),
+(95, 30, 9, 1, 2, 1, 1),
+(97, 30, 26, 1, 0, 1, 1),
+(98, 30, 28, 1, 0, 1, 2),
+(99, 30, 16, 1, 0, 1, 1);
 
 -- --------------------------------------------------------
 
@@ -198,7 +204,7 @@ INSERT INTO `items` (`id`, `name`, `type`, `min_dmg`, `max_dmg`, `intellect_bonu
 (21, 'Erő Ital', 'potion', 0, 0, 0, 0, 0, 'uncommon', 5, 0, 0, 0, 30),
 (22, 'Varázskönyv', 'weapon', 2, 5, 5, 0, 0, 'rare', 0, 5, 0, 0, 45),
 (23, 'Ősi Bot', 'weapon', 4, 9, 6, 0, 0, 'epic', 0, 6, 0, 0, 70),
-(24, 'Pajzs', 'armor', 0, 0, 0, 5, 0, 'uncommon', 0, 0, 5, 0, 25),
+(24, 'Nomád Harci Vért', 'armor', 0, 0, 0, 5, 0, 'uncommon', 0, 0, 5, 0, 25),
 (25, 'Mágikus Pajzs', 'armor', 0, 0, 3, 7, 0, 'epic', 0, 3, 7, 0, 60),
 (26, 'Gyűrű az Erőhöz', 'accessory', 0, 0, 0, 0, 0, 'rare', 4, 0, 0, 0, 40),
 (27, 'Gyűrű az Intelligenciához', 'accessory', 0, 0, 4, 0, 0, 'rare', 0, 4, 0, 0, 40),
@@ -276,9 +282,9 @@ INSERT INTO `players` (`id`, `username`, `email`, `password_hash`, `class_id`, `
 (27, 'warror123', 'gasdma@gmadsasdo.com', '$2b$10$zEwOIrFQrGbmnil1TnbbY.CaP1/fX1iiqKk4LteVUE579jGAEZOX6', 6, 15, 79, 492854, 8000, 8000, 30, 0, 3, '2026-01-13 11:01:21', 3),
 (28, 'uasdusau123', 'sadmdsa@gmail.com', '$2b$10$9WKKSjgITWTK3HOL0s4XgOh/Ub3CCAJHRpFqmdyVmFbzbvGz31BCy', 6, 9, 39, 971, 425, 425, 21, 0, 3, '2026-01-14 11:42:06', 150),
 (29, 'asdasdasd123', 'asdasdasd123@gmail.com', '$2b$10$L8aUYJI/3O7OP/zlGtRg9uYf2ffpZ5t61R4Q2oMCgZLfYkBOMzTRa', 6, 1, 0, 500, 230, 230, 36, 0, 3, '2026-01-15 10:20:07', 83),
-(30, 'plsmukodj', 'asdsad@gmaic.com', '$2b$10$9SrbZq7CO/CotscAaPDRhe.vK0yFl89h2Ya6nSts67vO2AK8a/Hfu', 6, 1, 0, 100, 50, 50, 5, 0, 3, '2026-01-15 12:23:20', 0),
+(30, 'plsmukodj', 'asdsad@gmaic.com', '$2b$10$9SrbZq7CO/CotscAaPDRhe.vK0yFl89h2Ya6nSts67vO2AK8a/Hfu', 6, 5, 108, 55, 80, 80, 11, 0, 3, '2026-01-15 12:23:20', 0),
 (31, 'tesztelgetek', 'legelek@gmail.com', '$2b$10$rfMu9XbaZpbWVNnzJdHGfudlwsnfrCT1zhlwX/HZ2SRR9LD8Vz4jC', 6, 23, 161, 2130, 1799, 1799, 16, 0, 3, '2026-01-16 09:15:23', 33),
-(32, 'tesztelgetek123', '123@gmads.com', '$2b$10$ZwHWxClvUUtJnUuMzWm6VuVkBFBFF2VJp5Ua9I9eWdkfKVAv7NUcW', 6, 14, 168, 299785, 13230, 14930, 56, 16, 22, '2026-01-22 12:13:01', 177);
+(32, 'tesztelgetek123', '123@gmads.com', '$2b$10$ZwHWxClvUUtJnUuMzWm6VuVkBFBFF2VJp5Ua9I9eWdkfKVAv7NUcW', 6, 21, 315, 264039, 13230, 14930, 56, 16, 22, '2026-01-22 12:13:01', 198);
 
 -- --------------------------------------------------------
 
@@ -570,7 +576,7 @@ ALTER TABLE `achievements`
 -- AUTO_INCREMENT a táblához `birtokol`
 --
 ALTER TABLE `birtokol`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=93;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=100;
 
 --
 -- AUTO_INCREMENT a táblához `classes`
