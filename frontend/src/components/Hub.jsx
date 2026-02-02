@@ -12,6 +12,7 @@ export default function Hub({ onGoAdventure }) {
   const { player } = usePlayer();
   const timeoutRef = useRef(null);
 
+  const [isFadingOut, setIsFadingOut] = useState(false);
   const [playerPos, setPlayerPos] = useState({ x: 40, y: 75 });
   const [isMoving, setIsMoving] = useState(false);
 
@@ -19,7 +20,7 @@ export default function Hub({ onGoAdventure }) {
   const [showBlacksmith, setShowBlacksmith] = useState(false);
   const [showInv, setShowInv] = useState(false);
   const [showQuestBoard, setShowQuestBoard] = useState(false);
-  
+  const isAnyModalOpen = showShop || showBlacksmith || showInv || showQuestBoard;
   // TÖRÖLVE: const [isAdventuring, setIsAdventuring] = useState(false); <-- Nem kell helyi state
 
   /** 🎥 CAMERA */
@@ -30,29 +31,30 @@ export default function Hub({ onGoAdventure }) {
   const SPEED = 20;
 
   /** 🎯 KAMERA BELEZOOM */
-  const zoomTo = (xPercent, yPercent, zoomLevel = 1.5) => {
-    const vw = window.innerWidth;
-    const vh = window.innerHeight;
+  /** 🎯 KAMERA BELEZOOM */
+const zoomTo = (xPercent, yPercent, zoomLevel = 2) => {
+  setIsFadingOut(true); // Elindítjuk az elsötétülést
 
-    const targetX = (xPercent / 110) * vw;
-    const targetY = (yPercent / 130) * vh;
+  // Várunk egy kicsit (pl. 400ms), amíg el nem sötétül teljesen a kép,
+  // és csak utána hajtjuk végre a zoom elmozdulást a háttérben.
+  setTimeout(() => {
+  
 
-    const centerX = vw / 2;
-    const centerY = vh / 2;
+    // Miután a kamera a helyére ugrott, újra kivilágosítunk
+    setIsFadingOut(false);
+  }, 400); 
+};
 
-    const offsetX = centerX - targetX * zoomLevel;
-    const offsetY = centerY - targetY * zoomLevel;
+const resetZoom = () => {
+  setIsFadingOut(true); // Sötétítünk
 
-    setIsZooming(true);
-    setZoom(zoomLevel);
-    setOffset({ x: offsetX, y: offsetY });
-  };
-
-  const resetZoom = () => {
+  setTimeout(() => {
     setZoom(1);
     setOffset({ x: 0, y: 0 });
     setIsZooming(false);
-  };
+    setIsFadingOut(false); // Kivilágosítunk
+  }, 400);
+};
 
   /** 🚶 MOZGÁS */
   const moveTo = (x, y, type) => {
@@ -61,7 +63,7 @@ export default function Hub({ onGoAdventure }) {
     const dx = x - playerPos.x;
     const dy = y - playerPos.y;
     const distance = Math.sqrt(dx * dx + dy * dy);
-    const duration = (distance / SPEED) * 500;
+    const duration = (distance / SPEED) * 300;
 
     setIsMoving(true);
     setPlayerPos({ x, y });
@@ -71,8 +73,8 @@ export default function Hub({ onGoAdventure }) {
     // ⏱ modal / esemény hamarabb nyílik
     // Kicsit növeltem az időzítést (0.5 -> 0.8), hogy a karakter odaérjen, mielőtt váltunk
     timeoutRef.current = setTimeout(() => {
-      openModal(type);
-    }, duration * 0.8);
+  openModal(type);
+}, 500); // 500ms alatt lefut a fade-out, és utána puff, ott a modal a sötétben.
 
     // mozgás befejezése
     setTimeout(() => {
@@ -105,13 +107,21 @@ export default function Hub({ onGoAdventure }) {
 
   return (
     <div className="hub-root">
+    {/* ✨ ÚJ: FOKOZATOS VILÁGOSODÁS/SÖTÉTEDÉS RÉTEG */}
+    <div 
+      className={`hub-overlay ${
+        isAnyModalOpen 
+          ? "modal-active" 
+          : (isFadingOut ? "fade-out-effect" : "fade-in-effect")
+      }`}/>
+
       <div className="camera">
         {/* 🌍 WORLD – EZ MOZOG & ZOOMOL */}
         <div
           className={`world ${isZooming ? "hub-zooming" : ""}`}
-          style={{
-            transform: `translate(${offset.x}px, ${offset.y}px) scale(${zoom})`,
-          }}
+        style={{
+          transform: `translate(${offset.x}px, ${offset.y}px) scale(${zoom})`,
+        }}
         >
           {/* 🗺️ HUB */}
           <img src="./src/assets/pics/HUB.png" alt="hub" className="hub-image" />
@@ -138,8 +148,8 @@ export default function Hub({ onGoAdventure }) {
 
       {/* MODALOK */}
       {showShop && <ShopModal onClose={() => { setShowShop(false); resetZoom(); }} />}
-      {showBlacksmith && <BlacksmithModal onClose={() => { setShowBlacksmith(false); resetZoom(); }} />}
-      {showInv && <InvModal onClose={() => { setShowInv(false); resetZoom(); }} />}
+    {showBlacksmith && <BlacksmithModal onClose={() => { setShowBlacksmith(false); resetZoom(); }} />}
+    {showInv && <InvModal onClose={() => { setShowInv(false); resetZoom(); }} />}
 
       {showQuestBoard && player && (
         <QuestBoardModal

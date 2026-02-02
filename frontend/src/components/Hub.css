@@ -63,21 +63,18 @@
   background-position: center;
 }
 
-.hub-zooming {
-  animation: hubZoomFX 1 ease-in-out forwards;
+/* Ez az osztály kényszeríti a teljes sötétséget animáció nélkül */
+.hub-overlay.modal-active {
+  opacity: 1;
+  
+  transition: none; /* Ne legyen átmenet, amikor a modal megjelenik */
 }
 
-@keyframes hubZoomFX {
-  0% {
-    filter: blur(0px) brightness(1);
-  }
-  50% {
-    filter: blur(1px) brightness(0.5);
-  }
-  100% {
-    filter: blur(2px) brightness(1);
-  }
+.overlay-black {
+  opacity: 1 !important;
+  
 }
+
 
 .hub-root {
   position: fixed;
@@ -98,7 +95,7 @@
   height: 100vh;
   object-fit: cover;
   transform-origin: top left;
-  transition: transform 1000ms ease-in-out;
+  transition: transform 500ms ease-in-out;
   will-change: transform;
 }
 
@@ -131,4 +128,34 @@
   background-color: rgba(0, 0, 0, 0.080);
   box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
   filter: brightness(0.95);
+}
+
+/* Fekete fedőréteg a teljes képernyőre */
+.hub-overlay {
+  position: fixed;
+  inset: 0;
+  background: black;
+  z-index: 1; /* Legyen minden felett */
+  pointer-events: none; /* Ne akadályozza a kattintást */
+  opacity: 1;
+}
+
+/* Kezdő kivilágosodás animáció */
+.fade-in-effect {
+  animation: fadeInScreen 1s ease-out forwards;
+}
+
+/* Sötétedés animáció zoomoláskor */
+.fade-out-effect {
+  animation: fadeOutScreen 1s ease-in-out forwards;
+}
+
+@keyframes fadeInScreen {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+
+@keyframes fadeOutScreen {
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
