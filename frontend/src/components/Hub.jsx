@@ -14,7 +14,7 @@ export default function Hub({ onGoAdventure }) {
   const [isFadingOut, setIsFadingOut] = useState(false);
   const [playerPos, setPlayerPos] = useState({ x: 40, y: 75 });
   const [isMoving, setIsMoving] = useState(false);
-
+  const [hoveredLocation, setHoveredLocation] = useState("");
   const [showShop, setShowShop] = useState(false);
   const [showBlacksmith, setShowBlacksmith] = useState(false);
   const [showInv, setShowInv] = useState(false);
@@ -110,29 +110,46 @@ export default function Hub({ onGoAdventure }) {
   const CLASS_STRING = { 6: "warrior", 7: "mage", 8: "archer" };
 
   return (
-    <div className="hub-root">
-      {/* OVERLAY: Ez felel a sötétítésért */}
-      <div 
-      className={`hub-overlay ${isFadingOut || isAnyModalOpen ? "is-dark" : ""}`}
-    />
+  <div className="hub-root">
+    {/* Felirat, ami csak akkor látszik, ha valami fölé visszük az egeret */}
+    {hoveredLocation && !isAnyModalOpen && (
+      <div className="location-tooltip">
+        {hoveredLocation}
+      </div>
+    )}
 
-      <div className="camera">
-        <div
-          className={`world ${isZooming ? "hub-zooming" : ""}`}
-          style={{ 
-            transform: `translate(${offset.x}px, ${offset.y}px) scale(${zoom})`,
-            transition: isFadingOut ? "transform 0.5s ease-in-out" : "none" 
-          }}
-        >
-          <img src="./src/assets/pics/HUB.png" alt="hub" className="hub-image" />
+    <div className={`hub-overlay ${isFadingOut || isAnyModalOpen ? "is-dark" : ""}`} />
 
-          {/* HOTZONE-OK */}
-          <div className="hotzone keret" style={{ left: "38%", bottom: "17%", width: "440px", height: "500px" }} onClick={() => moveTo(50, 80, "adventure")} />
-          <div className="hotzone keret" style={{ left: "5%", bottom: "12%", width: "600px", height: "350px" }} onClick={() => moveTo(30, 85, "blacksmith")} />
-          <div className="hotzone keret" style={{ right: "20%", bottom: "12%", width: "330px", height: "270px" }} onClick={() => moveTo(65, 80, "quest")} />
-          <div className="hotzone keret" style={{ right: "5%", bottom: "12%", width: "280px", height: "250px" }} onClick={() => moveTo(85, 85, "shop")} />
-          <div className="hotzone keret" style={{ right: "20%", bottom: "37%", width: "330px", height: "270px" }} onClick={() => moveTo(60, 80, "inv")} />
+    <div className="camera">
+      <div
+        className={`world ${isZooming ? "hub-zooming" : ""}`}
+        style={{ 
+          transform: `translate(${offset.x}px, ${offset.y}px) scale(${zoom})`,
+          transition: isFadingOut ? "transform 0.5s ease-in-out" : "none" 
+        }}
+      >
+        <img src="./src/assets/pics/HUB.png" alt="hub" className="hub-image" />
 
+        {/* HOTZONE-OK - Kibővítve hover funkcióval */}
+        <div className="hotzone keret" style={{ left: "38%", bottom: "17%", width: "440px", height: "500px" }} onClick={() => moveTo(50, 80, "adventure")}>
+  <span className="zone-label">Utazás</span>
+</div>
+
+<div className="hotzone keret" style={{ left: "5%", bottom: "12%", width: "600px", height: "350px" }} onClick={() => moveTo(30, 85, "blacksmith")}>
+  <span className="zone-label">Kovács</span>
+</div>
+
+<div className="hotzone keret" style={{ right: "20%", bottom: "12%", width: "330px", height: "270px" }} onClick={() => moveTo(65, 80, "quest")}>
+  <span className="zone-label">Jutalmak</span>
+</div>
+
+<div className="hotzone keret" style={{ right: "5%", bottom: "12%", width: "280px", height: "250px" }} onClick={() => moveTo(85, 85, "shop")}>
+  <span className="zone-label">Bolt</span>
+</div>
+
+<div className="hotzone keret" style={{ right: "20%", bottom: "37%", width: "330px", height: "270px" }} onClick={() => moveTo(60, 80, "inv")}>
+  <span className="zone-label">Otthon</span>
+</div>
           {/* 🧍 PLAYER */}
           <img
             src="./src/assets/pics/TESZT.PNG"
