@@ -7,6 +7,7 @@ import EnemyFrame from "./EnemyFrame";
 import HPPopup from "./HPPopup";
 import AbilityEffectLayer from "./AbilityEffectLayer";
 
+
 // ===== MAGE FX =====
 import healFx from "../assets/effects/heal_generic.webm";
 import arcaneMissilesFx from "../assets/effects/mage_arcane_missiles.webm";
@@ -112,6 +113,8 @@ const CLASS_BOSS_MAP = {
   7: "Arcane Abomination",
   8: "Forest Spirit Beast",
 };
+
+
 
 // ===== WARRIOR HELPERS =====
 function clamp01(v) { 
@@ -789,7 +792,12 @@ export default function CombatView({
   const [enemyVulnerability, setEnemyVulnerability] = useState(null);
   const [enemyBleed, setEnemyBleed] = useState(null);
   const [playerEvasionTurns, setPlayerEvasionTurns] = useState(0);
-  const [playerPoison, setPlayerPoison] = useState(null);
+const [playerPoison, setPlayerPoison] = useState(null);
+
+const playerPoisonRef = useRef(null);
+useEffect(() => {
+  playerPoisonRef.current = playerPoison;
+}, [playerPoison]);
 
 
   // ===== ENEMY ABILITY STATE =====
@@ -797,6 +805,9 @@ export default function CombatView({
   const [enemyInvulnTurns, setEnemyInvulnTurns] = useState(0);
   const [enemyFrenzyTurns, setEnemyFrenzyTurns] = useState(0);
   const [playerWeakenTurns, setPlayerWeakenTurns] = useState(0);
+
+  // ✅ AFFIX: Shielded (spawnkor guardot ad)
+
 
   const enemyGuardHitsRef = useRef(0);
   useEffect(() => { enemyGuardHitsRef.current = enemyGuardHits; }, [enemyGuardHits]);
@@ -995,6 +1006,23 @@ useEffect(() => {
     }
   }
 
+  function enemyVampiricHeal(amountDealt) {
+  const vamp = enemy?.affixes?.find(a => a.id === "vampiric");
+  if (!vamp) return;
+  if (enemyHPRef.current <= 0) return;
+
+  const pct = vamp.healPct ?? 0.3;
+  const heal = Math.max(1, Math.floor(amountDealt * pct));
+  if (heal <= 0) return;
+
+  setEnemyHP((prev) => {
+    const newHP = Math.min(enemy.maxHp, prev + heal);
+    addHPPopup(+heal, "enemy");
+    pushLog(`${enemy.name} [Vampiric] – +${heal} HP.`);
+    return newHP;
+  });
+}
+
   useEffect(() => () => clearAllTimers(), []);
 
   useEffect(() => {
@@ -1171,12 +1199,6 @@ if (isQuest && Array.isArray(enemies) && enemies.length > 1) {
   enemyCount = enemies.length;
 }
 
-// csak sima fight path-on, és csak ha nincs kívülről fix enemies lista
-if (!boss && !isElite && pathType === "fight") {
-  const roll = Math.random();
-  if (roll > 0.80) enemyCount = 3;      // 20% esély 3 enemyre
-  else if (roll > 0.50) enemyCount = 2; // 30% esély 2 enemyre
-}
 
 const generatedEnemies = [];
 for (let i = 0; i < enemyCount; i++) {
@@ -1193,6 +1215,7 @@ for (let i = 0; i < enemyCount; i++) {
       xpMax: enemyData.xpRewardMax,
     },
     role: enemyData.role,
+    affixes: enemyData.affixes || [],
     _uniqueId: uid(),
   });
 }
@@ -1821,6 +1844,19 @@ useEffect(() => {
 useEffect(() => {
   if (!enemy) return;
 
+  const shielded = enemy.affixes?.find(a => a.id === "shielded");
+  if (!shielded) return;
+
+  const hits = shielded.guardHits ?? 1;
+
+  setEnemyGuardHitsSync(hits);
+  pushLog(`${enemy.name} [Shielded] – Guard aktív (${hits} találat).`);
+}, [enemy]);
+
+
+useEffect(() => {
+  if (!enemy) return;
+
   const victory = enemyHP <= 0 && playerHP > 0;
   if (!victory) return;
 
@@ -1879,42 +1915,70 @@ useEffect(() => {
     const t = setTimeout(() => {
       if (battleOverRef.current) return;
 
-      // ===== DoT tickek =====
+// ===== PLAYER DoT (Plague Aura + playerPoison tick) =====
+const plague = enemy?.affixes?.find(a => a.id === "plague_aura");
 
+// amit ténylegesen ebben a tickben használunk
+let poisonNow = playerPoisonRef.current;
 
-      if (playerPoison && playerHP > 0) {
-  const pDmg = playerPoison.damagePerTurn ?? 0;
-  const newHP = Math.max(0, playerHP - pDmg);
+// ha Plague Aura van és nincs aktív poison, tedd fel (és ebben a tickben is használd)
+if (plague?.poison && playerHPRef.current > 0) {
+  const dmg = plague.poison.damagePerTurn ?? 3;
+  const turns = plague.poison.turns ?? 3;
 
-  if (pDmg > 0) {
-    setPlayerHP(newHP);
-    addHPPopup(-pDmg, "player");
-    pushLog(`Méreg sebzés: ${pDmg} (Te – ${newHP} HP).`);
+  const shouldApply = !poisonNow || (poisonNow.remainingTurns ?? 0) <= 0;
+
+  if (shouldApply) {
+    const next = { damagePerTurn: dmg, remainingTurns: turns };
+
+    setPlayerPoison(next);
+    playerPoisonRef.current = next; // ✅ azonnali sync
+    poisonNow = next;
+
+    pushLog(`${enemy.name} [Plague Aura] – megmérgez (${turns} kör).`);
   }
-
-  const remaining = (playerPoison.remainingTurns ?? 1) - 1;
-  if (remaining <= 0 || newHP <= 0) setPlayerPoison(null);
-  else setPlayerPoison((prev) => (prev ? { ...prev, remainingTurns: remaining } : null));
-
-  if (newHP <= 0) { endBattle(); return; }
 }
 
-      if (enemyBurn && enemyHP > 0) {
-        const burnDmg = enemyBurn.damagePerTurn ?? 0;
-        const newHP = Math.max(0, enemyHP - burnDmg);
+// tick
+if (poisonNow && playerHPRef.current > 0) {
+  const pDmg = poisonNow.damagePerTurn ?? 0;
 
-        if (burnDmg > 0) {
-          setEnemyHP(newHP);
-          addHPPopup(-burnDmg, "enemy");
-          pushLog(`Égés sebzés: ${burnDmg} (${enemy.name} – ${newHP} HP).`);
-        }
+  setPlayerHP((prev) => {
+    const newHP = Math.max(0, prev - pDmg);
+    if (pDmg > 0) {
+      addHPPopup(-pDmg, "player");
+      pushLog(`Méreg sebzés: ${pDmg} (Te – ${newHP} HP).`);
+    }
+    if (newHP <= 0) endBattle();
+    return newHP;
+  });
 
-        const remaining = (enemyBurn.remainingTurns ?? 1) - 1;
-        if (remaining <= 0 || newHP <= 0) setEnemyBurn(null);
-        else setEnemyBurn((prev) => (prev ? { ...prev, remainingTurns: remaining } : null));
+  const remaining = (poisonNow.remainingTurns ?? 1) - 1;
+  const nextPoison = remaining <= 0 ? null : { ...poisonNow, remainingTurns: remaining };
 
-        if (newHP <= 0) { endBattle(); return; }
-      }
+  setPlayerPoison(nextPoison);
+  playerPoisonRef.current = nextPoison; // ✅ sync
+}
+
+  if (enemyBurn && enemyHPRef.current > 0) {
+  const burnDmg = enemyBurn.damagePerTurn ?? 0;
+
+  setEnemyHP((prev) => {
+    const newHP = Math.max(0, prev - burnDmg);
+    if (burnDmg > 0) {
+      addHPPopup(-burnDmg, "enemy");
+      pushLog(`Égés sebzés: ${burnDmg} (${enemy.name} – ${newHP} HP).`);
+    }
+    if (newHP <= 0) { endBattle(); }
+    return newHP;
+  });
+
+  setEnemyBurn((prev) => {
+    if (!prev) return null;
+    const remaining = (prev.remainingTurns ?? 1) - 1;
+    return remaining <= 0 ? null : { ...prev, remainingTurns: remaining };
+  });
+}
 
       if (enemyPoison && enemyHP > 0) {
         const poisonDmg = enemyPoison.damagePerTurn ?? 0;
@@ -1996,6 +2060,7 @@ useEffect(() => {
         const finalBase = Math.max(0, dmg - Math.floor(playerDefenseNow / 2));
         let final = finalBase;
 
+
         if (classKey === "warrior") {
           const rage01 = getWarriorRage01(playerHPRef.current, maxHPFromPlayer);
           final = Math.floor(final * warriorDamageInMult(rage01));
@@ -2015,6 +2080,7 @@ useEffect(() => {
           setPetHP((prev) => {
             const newHP = Math.max(0, prev - final);
             addHPPopup(-final, "pet");
+             enemyVampiricHeal(final);
             pushLog(`${enemy.name} a petet üti (${final} sebzés). (Pet: ${newHP}/${petMaxHP})`);
             return newHP;
           });
@@ -2024,6 +2090,9 @@ useEffect(() => {
             const newHP = Math.max(0, prev - final);
             addHPPopup(-final, "player");
             pushLog(`${enemy.name} támad (${final} sebzés).`);
+
+            enemyVampiricHeal(final);
+
             if (newHP <= 0) endBattle();
             return newHP;
           });
@@ -2051,7 +2120,7 @@ useEffect(() => {
   function rollRewards() {
     if (!enemy || !enemy.rewards) return { xpGain: 0, goldGain: 50 };
     const { goldMin, goldMax, xpMin, xpMax } = enemy.rewards;
-    const goldGain = Math.floor(Math.random() * (goldMax - goldMin + 50)) + goldMin;
+    const goldGain = Math.floor(Math.random() * (goldMax - goldMin + 1)) + goldMin;
     const xpGain = Math.floor(Math.random() * (xpMax - xpMin + 1)) + xpMin;
     return { xpGain, goldGain };
   }
@@ -2320,6 +2389,14 @@ emitEnd({
       : undefined;
 
   const petAlive = classKey === "archer" && petMaxHP > 0 && petHP > 0;
+
+
+  const AFFIX_LABELS = {
+  vampiric: "Vampiric",
+  frenzied: "Frenzied",
+  shielded: "Shielded",
+  plague_aura: "Plague Aura",
+};
 
 return (
     <div className="fixed inset-0 text-white overflow-hidden">
@@ -2624,10 +2701,13 @@ return (
             </div>
           </div>
 
+                
           {/* ENEMY FRAME */}
           <div ref={enemyAnchorRef} className="absolute top-24 left-[80%] -translate-x-1/2 z-10">
             <div className="relative">
-              <EnemyFrame name={enemy?.name} hp={enemyHP} maxHP={enemy?.maxHp} image={enemyImage(enemy?.name)} damaged={enemyDamaged} />
+              <EnemyFrame name={enemy?.name} hp={enemyHP} maxHP={enemy?.maxHp} image={enemyImage(enemy?.name)} damaged={enemyDamaged}   affixes={enemy?.affixes || []} />
+
+              
               {hpPopups.filter((p) => p.target === "enemy").map((p) => (
                 <HPPopup key={p.id} value={p.value} isCrit={p.isCrit} variant={p.variant || "default"} onDone={() => setHPPopups((prev) => prev.filter((pp) => pp.id !== p.id))} />
               ))}
