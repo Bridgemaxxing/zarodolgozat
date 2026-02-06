@@ -50,6 +50,11 @@ const PET_UI = {
     left: "20px",
     top: "700px",
   },
+  buttonOffset: {
+    bottom: "-70px",   // ⬅️ gomb lejjebb / feljebb
+    left: "50%",       // vízszintes közép
+    translateX: "-50%",
+  },
 };
 
 const PET_SIZE = 300;
@@ -694,6 +699,14 @@ export default function CombatView({
   const [petMaxHP, setPetMaxHP] = useState(0);
   const [petTauntTurns, setPetTauntTurns] = useState(0);
 
+  // ✅ Archer: Pet Taunt cooldown (player körökben)
+const PET_TAUNT_COOLDOWN_TURNS = 3;   // ennyi player kör után tölthető újra
+const PET_TAUNT_DEFAULT_TURNS = 2;    // maga a taunt ennyi enemy körig tart (nálad most 2)
+
+const [petTauntCd, setPetTauntCd] = useState(0);
+const petTauntCdRef = useRef(0);
+useEffect(() => { petTauntCdRef.current = petTauntCd; }, [petTauntCd]);
+
   // ✅ SMART DRAW
   const [combatPool, setCombatPool] = useState([]);
   const [hand, setHand] = useState([null, null, null, null]);
@@ -1116,6 +1129,12 @@ useEffect(() => {
 
     resolvePendingReplaces();
     setDefending(false);
+
+    // ✅ Archer cooldown csökken player kör elején
+if (classKey === "archer") {
+  setPetTauntCd((prev) => Math.max(0, (prev || 0) - 1));
+}
+
     setTurn("player");
   }
 
@@ -1260,16 +1279,22 @@ if (remainingEnemies.length > 0) {
         setPlayerWeakenTurnsSync(0);
         enemyUsesRef.current = {};
 
-        if (classKey === "archer") {
-          const max = Math.floor(maxHPFromPlayer * PET_CFG.HP_RATIO);
-          setPetMaxHP(max);
-          setPetHP(max);
-          setPetTauntTurns(0);
-        } else {
-          setPetMaxHP(0);
-          setPetHP(0);
-          setPetTauntTurns(0);
-        }
+            if (classKey === "archer") {
+        const max = Math.floor(maxHPFromPlayer * PET_CFG.HP_RATIO);
+        setPetMaxHP(max);
+        setPetHP(max);
+        setPetTauntTurns(0);
+
+        setPetTauntCd(0);
+        petTauntCdRef.current = 0;
+      } else {
+        setPetMaxHP(0);
+        setPetHP(0);
+        setPetTauntTurns(0);
+
+        setPetTauntCd(0);
+        petTauntCdRef.current = 0;
+      }
 
         const pool = buildCombatPoolFromPlayer(player, classKey);
         setCombatPool(pool);
@@ -1383,6 +1408,8 @@ if (remainingEnemies.length > 0) {
   }, [playerHP, maxHPFromPlayer, classKey, battleOver]);
 
   
+  
+
  // ===== ARCANE =====
 function castArcane(choice) {
   if (battleOverRef.current) return;
@@ -1468,6 +1495,37 @@ if (choice.manaCost === "ALL") {
   trackTimeout(setTimeout(() => setTurn("enemy"), SMART_DRAW.PLAY_ANIM_MS));
 }
 
+function castPetTaunt() {
+  if (battleOverRef.current) return;
+  if (turn !== "player" || !enemy) return;
+  if (classKey !== "archer") return;
+
+  // pet kell hozzá
+  if (petHP <= 0 || petMaxHP <= 0) return;
+
+  // cooldown gate
+  if (petTauntCdRef.current > 0) return;
+
+  // taunt
+  const turns = PET_TAUNT_DEFAULT_TURNS;
+  setPetTauntTurns((prev) => Math.max(prev, turns));
+
+  // cooldown indul
+  setPetTauntCd(PET_TAUNT_COOLDOWN_TURNS);
+  petTauntCdRef.current = PET_TAUNT_COOLDOWN_TURNS;
+
+  // opcionális VFX + log
+  spawnAbilityEffect({
+    src: warriorShieldWallFx,
+    target: "player_shield",
+    width: "1150px",
+    height: "1000px",
+  });
+  pushLog(`Pet Taunt aktiválva (${turns} kör). Cooldown: ${PET_TAUNT_COOLDOWN_TURNS}.`);
+
+  // ugyanúgy elfogyasztja a kört, mint egy lap
+  setTurn("enemy");
+}
 
   // ===== PET BITE =====
   function tryPetBite(extraBonus = 0) {
@@ -2527,6 +2585,109 @@ return (
     )}
   </div>
 )}
+
+
+{classKey === "archer" && petMaxHP > 0 && (
+  <div
+    className="absolute z-[80]"
+    style={{ ...PET_UI.wrapperStyle, width: `${PET_SIZE}px` }}
+  >
+    <div className="relative" style={{ width: `${PET_SIZE}px` }}>
+
+      {/* ===== CD / TAUNT INFO (felül) ===== */}
+      <div
+        className="petBadgeInv absolute -top-12 left-1/2 -translate-x-1/2
+                   px-4 py-2 rounded-md whitespace-nowrap text-[22px]"
+      >
+        CD: <span className="petCdRed">{petTauntCd}</span> • TAUNT: {petTauntTurns}
+      </div>
+
+      {/* ===== PET IMAGE ===== */}
+      <div
+        className="rounded-xl overflow-hidden"
+        style={{
+          width: `${PET_SIZE}px`,
+          height: `${PET_SIZE}px`,
+          opacity: petHP <= 0 ? 0.45 : 1,
+          backgroundColor: "#460809",
+          boxShadow:
+            "0px 10px black, 0px -10px black, 10px 0px black, -10px 0px black, inset 0px 10px #00000038",
+        }}
+      >
+        <img
+          src="/ui/player/pet.png"
+          alt="pet"
+          className="w-full h-full object-cover"
+        />
+
+        {/* opcionális: TAUNT ACTIVE badge a képen */}
+        {petTauntTurns > 0 && (
+          <div className="absolute top-3 left-3 petBadgeInv px-3 py-1 rounded-md text-[18px]">
+            TAUNT ACTIVE
+          </div>
+        )}
+      </div>
+
+      {/* ===== HP BAR ===== */}
+      <div
+        className="relative mt-2 overflow-hidden"
+        style={{
+          height: "16px",
+          width: `${PET_SIZE}px`,
+          backgroundColor: "#290f0f",
+          boxShadow:
+            "0px 5px black, 0px -5px black, 5px 0px black, -5px 0px black, inset 0px 5px #00000038",
+          borderRadius: "999px",
+        }}
+      >
+        <div
+          style={{
+            height: "100%",
+            width: `${petMaxHP > 0 ? (petHP / petMaxHP) * 100 : 0}%`,
+            background: "#b61a1a",
+            transition: "width 200ms",
+          }}
+        />
+        <div
+          className="absolute inset-0 flex items-center justify-center"
+          style={{
+            color: "#fef9c2",
+            fontFamily: '"Jersey 10", sans-serif',
+            fontSize: "18px",
+            letterSpacing: "2px",
+            textShadow: "2px 2px 0px #000000",
+            pointerEvents: "none",
+          }}
+        >
+          {petHP}/{petMaxHP}
+        </div>
+      </div>
+
+      {/* ===== PET TAUNT BUTTON (lent, állítható offsettel) ===== */}
+      <button
+        onClick={(e) => {
+          e.preventDefault();
+          castPetTaunt();
+        }}
+        disabled={turn !== "player" || petHP <= 0 || petTauntCd > 0}
+        className={[
+          "absolute px-6 py-3 rounded-md",
+          turn === "player" && petHP > 0 && petTauntCd === 0
+            ? "petTauntBtnInv"
+            : "petTauntBtnInvDisabled",
+        ].join(" ")}
+        style={{
+          bottom: PET_UI.buttonOffset.bottom,
+          left: PET_UI.buttonOffset.left,
+          transform: `translateX(${PET_UI.buttonOffset.translateX})`,
+        }}
+      >
+        PET TAUNT {petTauntCd > 0 ? `(${petTauntCd})` : ""}
+      </button>
+    </div>
+  </div>
+)}
+
 
 {/* ARCANE PICKER MODAL - A Visszatérő Fan Design */}
 {arcanePickerOpen && !battleOver && (
