@@ -1533,6 +1533,100 @@ app.get("/api/tips", (req, res) => {
 
 
 
+
+// ================= ADMIN: SET STATS (nem +=, hanem SET) =================
+// Body:
+// {
+//   "adminId": 44,
+//   "targetPlayerId": 44,
+//   "values": { "gold": 9999, "max_hp": 500, "hp": 500, "level": 10, ... }
+// }
+
+app.post("/api/admin/set-stats", (req, res) => {
+  const { adminId, targetPlayerId, values } = req.body || {};
+
+  if (!adminId || !targetPlayerId || !values || typeof values !== "object") {
+    return res.status(400).json({ error: "Hiányzó adminId/targetPlayerId/values" });
+  }
+
+  // 1) admin ellenőrzés
+  pool.query(
+    "SELECT admin FROM players WHERE id = ? LIMIT 1",
+    [adminId],
+    (err, rows) => {
+      if (err) {
+        console.error("admin check db error:", err);
+        return res.status(500).json({ error: "DB hiba (admin check)" });
+      }
+      if (!rows || rows.length === 0) return res.status(404).json({ error: "Nincs ilyen admin user" });
+      if (Number(rows[0].admin) !== 1) return res.status(403).json({ error: "Nincs jogosultság" });
+
+      // 2) whitelist + int validálás
+      const ALLOWED = new Set(["gold", "xp", "level", "strength", "intellect", "defense", "max_hp", "hp"]);
+      const cleaned = {};
+
+      for (const [k, v] of Object.entries(values)) {
+        if (!ALLOWED.has(k)) continue;
+        const n = Number(v);
+        if (!Number.isFinite(n) || !Number.isInteger(n)) continue;
+        cleaned[k] = n;
+      }
+
+      // max_hp -> hp automatikusan fullra (ha hp nem lett külön megadva)
+      if (cleaned.max_hp != null && cleaned.hp == null) {
+        cleaned.hp = cleaned.max_hp;
+      }
+
+      if (Object.keys(cleaned).length === 0) {
+        return res.status(400).json({ error: "Nincs érvényes frissíthető mező" });
+      }
+
+      // 3) clamp: hp <= max_hp (ha mindkettő benne van)
+      if (cleaned.max_hp != null && cleaned.hp != null) {
+        cleaned.hp = Math.min(cleaned.hp, cleaned.max_hp);
+      }
+
+      // 4) dinamikus UPDATE
+      const setParts = [];
+      const params = [];
+
+      for (const [k, n] of Object.entries(cleaned)) {
+        setParts.push(`${k} = ?`);
+        params.push(n);
+      }
+      params.push(targetPlayerId);
+
+      const sql = `UPDATE players SET ${setParts.join(", ")} WHERE id = ?`;
+
+      pool.query(sql, params, (updErr, updRes) => {
+        if (updErr) {
+          console.error("admin set-stats update error:", updErr);
+          return res.status(500).json({ error: "DB hiba (update)" });
+        }
+        if (!updRes || updRes.affectedRows === 0) {
+          return res.status(404).json({ error: "Nincs ilyen target player" });
+        }
+
+        // 5) visszaadjuk a friss player-t
+        pool.query(
+          "SELECT id, username, email, class_id, level, xp, gold, hp, max_hp, strength, intellect, defense, admin FROM players WHERE id = ?",
+          [targetPlayerId],
+          (selErr, selRows) => {
+            if (selErr) {
+              console.error("admin set-stats reselect error:", selErr);
+              return res.json({ success: true, updated: true });
+            }
+            return res.json({ success: true, player: selRows?.[0] });
+          }
+        );
+      });
+    }
+  );
+});
+
+
+
+
 app.listen(port, () => {
   console.log(`Backend fut a ${port} porton`);
 });

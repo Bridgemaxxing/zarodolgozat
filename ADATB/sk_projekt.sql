@@ -3,9 +3,9 @@
 -- https://www.phpmyadmin.net/
 --
 -- Gép: 127.0.0.1
--- Létrehozás ideje: 2026. Feb 04. 13:32
--- Kiszolgáló verziója: 10.4.28-MariaDB
--- PHP verzió: 8.2.4
+-- Létrehozás ideje: 2026. Feb 09. 00:04
+-- Kiszolgáló verziója: 10.4.32-MariaDB
+-- PHP verzió: 8.2.12
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -155,7 +155,8 @@ INSERT INTO `birtokol` (`id`, `player_id`, `item_id`, `quantity`, `upgrade_level
 (140, 42, 40, 1, 2, 1, 1),
 (142, 42, 35, 1, 1, 1, 1),
 (143, 42, 57, 1, 0, 1, 1),
-(144, 42, 26, 1, 0, 1, 1);
+(144, 42, 26, 1, 0, 1, 1),
+(145, 44, 31, 1, 122, 0, 1);
 
 -- --------------------------------------------------------
 
@@ -318,39 +319,43 @@ CREATE TABLE `players` (
   `intellect` int(11) DEFAULT 5,
   `defense` int(11) DEFAULT 2,
   `created_at` datetime DEFAULT current_timestamp(),
-  `unspentStatPoints` int(11) DEFAULT 0
+  `unspentStatPoints` int(11) DEFAULT 0,
+  `admin` int(1) NOT NULL DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_hungarian_ci;
 
 --
 -- A tábla adatainak kiíratása `players`
 --
 
-INSERT INTO `players` (`id`, `username`, `email`, `password_hash`, `class_id`, `level`, `xp`, `gold`, `hp`, `max_hp`, `strength`, `intellect`, `defense`, `created_at`, `unspentStatPoints`) VALUES
-(18, 'tesztfasz123', 'teszt@gmail.com', '123', 7, 8, 219, 817, 700, 700, 100, 118, 2, '2025-11-24 11:20:25', 0),
-(19, 'teszt321', '321@gg.com', '123', 6, 100, 94765, 100030, 50, 50, 5, 0, 3, '2025-11-24 14:13:14', 0),
-(20, 'teszt123123', 'mgm@gmail.com', '123', 7, 7, 41, 262, 100, 100, 5, 13, 2, '2025-12-02 10:38:22', 0),
-(21, 'puszi123', 'pusz@gmail.com', '123', 6, 5, 97, 194, 100, 100, 7, 5, 2, '2025-12-02 12:57:16', 0),
-(22, '123123', 'asdqw@gmail.com', '123', 8, 1, 0, 100, 40, 40, 3, 2, 2, '2025-12-02 13:45:37', 0),
-(23, 'alesz123', 'alesz@gmail.com', '123', 6, 1, 0, 100, 50, 50, 5, 0, 3, '2025-12-02 13:49:54', 0),
-(24, 'Hunor', 'ceges@gamil.kum', 'fgh', 8, 1, 10000, 9895, 40, 40, 3, 2, 2, '2025-12-05 08:22:15', 0),
-(25, 'asd', 'asd@gmail.com', 'asd', 7, 51, 33, 10020, 120, 120, 0, 20, 1, '2025-12-09 09:10:58', 0),
-(26, 'warror', 'gma@gmao.com', '123', 6, 1, 0, 84068, 50, 50, 5, 0, 3, '2026-01-12 11:35:48', 0),
-(27, 'warror123', 'gasdma@gmadsasdo.com', '$2b$10$zEwOIrFQrGbmnil1TnbbY.CaP1/fX1iiqKk4LteVUE579jGAEZOX6', 6, 15, 79, 492854, 8000, 8000, 30, 0, 3, '2026-01-13 11:01:21', 3),
-(28, 'uasdusau123', 'sadmdsa@gmail.com', '$2b$10$9WKKSjgITWTK3HOL0s4XgOh/Ub3CCAJHRpFqmdyVmFbzbvGz31BCy', 6, 9, 39, 971, 425, 425, 21, 0, 3, '2026-01-14 11:42:06', 150),
-(29, 'asdasdasd123', 'asdasdasd123@gmail.com', '$2b$10$L8aUYJI/3O7OP/zlGtRg9uYf2ffpZ5t61R4Q2oMCgZLfYkBOMzTRa', 6, 1, 0, 500, 230, 230, 36, 0, 3, '2026-01-15 10:20:07', 83),
-(30, 'plsmukodj', 'asdsad@gmaic.com', '$2b$10$9SrbZq7CO/CotscAaPDRhe.vK0yFl89h2Ya6nSts67vO2AK8a/Hfu', 6, 10, 51, 844, 80, 80, 11, 0, 3, '2026-01-15 12:23:20', 15),
-(31, 'tesztelgetek', 'legelek@gmail.com', '$2b$10$rfMu9XbaZpbWVNnzJdHGfudlwsnfrCT1zhlwX/HZ2SRR9LD8Vz4jC', 6, 23, 161, 2130, 1799, 1799, 16, 0, 3, '2026-01-16 09:15:23', 33),
-(32, 'tesztelgetek123', '123@gmads.com', '$2b$10$ZwHWxClvUUtJnUuMzWm6VuVkBFBFF2VJp5Ua9I9eWdkfKVAv7NUcW', 6, 22, 9, 264154, 13230, 14930, 56, 16, 22, '2026-01-22 12:13:01', 201),
-(33, 'tesztelget321', 'asdasd@gmasd.com', '$2b$10$.TtoEeAQBp51kAvAq6sTx.CjXc9eAefMQGt1A.DRLFS9dN/r8kvG2', 6, 5, 68, 367, 50, 50, 5, 0, 3, '2026-01-28 10:38:24', 12),
-(34, 'tesztelgetnek123', '123123@gmail.com', '$2b$10$dZD9./1P2xq/5T.LSzqx.eZ1nfjeu2yXfC1Kq3FrMkcyN7k52Fgmm', 6, 9, 99, 1228, 50, 50, 5, 0, 3, '2026-02-02 09:42:17', 24),
-(35, 'tesztelgetnek321', '123214@gmail.com', '$2b$10$ZXhg4ZqcvvpemEwY7N4HMeJhxS1qMgQmAr9gsi/KYFa4FBDZYd3AG', 6, 7, 120, 871, 50, 50, 5, 0, 3, '2026-02-02 10:23:53', 18),
-(36, 'tesztelgethetek123', '123125512@gmail.com', '$2b$10$fqByP.992ytXzswdrfRBK.BxJa7QMLv336OlQXlYetDzYVQmCEDbi', 6, 6, 59, 533, 70, 70, 10, 0, 3, '2026-02-02 11:59:49', 6),
-(37, 'magus', 'asdsadsa@gmail.com', '$2b$10$zZJ/KPUp59RNyYwsEhPwCeNKRib9vVOAzBhGI8ZypnPTyse2fobC6', 7, 85, 852, 11143, 60, 60, 0, 8, 1, '2026-02-03 07:59:30', 240),
-(38, 'ijaszalex', 'asdas@gmail.com', '$2b$10$hhXWLddhE7slg89meMjBEO3Y2.qPX5DYNJYs30HizHfQZSk0P4Jla', 8, 1, 0, 100, 40, 40, 3, 2, 2, '2026-02-03 13:16:38', 0),
-(39, 'progresstest', 'progtest@gmail.com', '$2b$10$Kr3Sv/LgNIPM0l9rsGduGOrxL4M7AHDDiXp34pGZJf3zIm2as6XWi', 6, 27, 25, 2920, 105, 105, 36, 0, 3, '2026-02-04 09:46:06', 27),
-(40, 'progresstest1', 'asdasavaf@gmail.com', '$2b$10$ZAyoSgXy/am2d1KfjIDKj.cdjQEuPvfvsHn0pOUem7e9rFzVmZJIa', 6, 32, 446, 589, 37, 135, 48, 0, 3, '2026-02-04 11:12:30', 33),
-(41, 'progresstestmagus', 'asdasdad@gmail.com', '$2b$10$FWkB5.U0K1KiOB8r/5Qi8uYMYrjDu2nM1/JQ1HrIVezJYC/tBn/pi', 7, 33, 404, 1672, 30, 30, 0, 5, 1, '2026-02-04 12:17:05', 96),
-(42, 'progresstestijasz', 'asdweq@gmail.com', '$2b$10$ZRFBF6dw3pAH6hEYh1pJWe7eIgIOgYcZ.yteB9p8tk/Q5TCFawHGu', 8, 23, 62, 923, 56, 115, 9, 2, 2, '2026-02-04 12:59:04', 39);
+INSERT INTO `players` (`id`, `username`, `email`, `password_hash`, `class_id`, `level`, `xp`, `gold`, `hp`, `max_hp`, `strength`, `intellect`, `defense`, `created_at`, `unspentStatPoints`, `admin`) VALUES
+(18, 'tesztfasz123', 'teszt@gmail.com', '123', 7, 8, 219, 817, 700, 700, 100, 118, 2, '2025-11-24 11:20:25', 0, 0),
+(19, 'teszt321', '321@gg.com', '123', 6, 100, 94765, 100030, 50, 50, 5, 0, 3, '2025-11-24 14:13:14', 0, 0),
+(20, 'teszt123123', 'mgm@gmail.com', '123', 7, 7, 41, 262, 100, 100, 5, 13, 2, '2025-12-02 10:38:22', 0, 0),
+(21, 'puszi123', 'pusz@gmail.com', '123', 6, 5, 97, 194, 100, 100, 7, 5, 2, '2025-12-02 12:57:16', 0, 0),
+(22, '123123', 'asdqw@gmail.com', '123', 8, 1, 0, 100, 40, 40, 3, 2, 2, '2025-12-02 13:45:37', 0, 0),
+(23, 'alesz123', 'alesz@gmail.com', '123', 6, 1, 0, 100, 50, 50, 5, 0, 3, '2025-12-02 13:49:54', 0, 0),
+(24, 'Hunor', 'ceges@gamil.kum', 'fgh', 8, 1, 10000, 9895, 40, 40, 3, 2, 2, '2025-12-05 08:22:15', 0, 0),
+(25, 'asd', 'asd@gmail.com', 'asd', 7, 51, 33, 10020, 120, 120, 0, 20, 1, '2025-12-09 09:10:58', 0, 0),
+(26, 'warror', 'gma@gmao.com', '123', 6, 1, 0, 84068, 50, 50, 5, 0, 3, '2026-01-12 11:35:48', 0, 0),
+(27, 'warror123', 'gasdma@gmadsasdo.com', '$2b$10$zEwOIrFQrGbmnil1TnbbY.CaP1/fX1iiqKk4LteVUE579jGAEZOX6', 6, 15, 79, 492854, 8000, 8000, 30, 0, 3, '2026-01-13 11:01:21', 3, 0),
+(28, 'uasdusau123', 'sadmdsa@gmail.com', '$2b$10$9WKKSjgITWTK3HOL0s4XgOh/Ub3CCAJHRpFqmdyVmFbzbvGz31BCy', 6, 9, 39, 971, 425, 425, 21, 0, 3, '2026-01-14 11:42:06', 150, 0),
+(29, 'asdasdasd123', 'asdasdasd123@gmail.com', '$2b$10$L8aUYJI/3O7OP/zlGtRg9uYf2ffpZ5t61R4Q2oMCgZLfYkBOMzTRa', 6, 1, 0, 500, 230, 230, 36, 0, 3, '2026-01-15 10:20:07', 83, 0),
+(30, 'plsmukodj', 'asdsad@gmaic.com', '$2b$10$9SrbZq7CO/CotscAaPDRhe.vK0yFl89h2Ya6nSts67vO2AK8a/Hfu', 6, 10, 51, 844, 80, 80, 11, 0, 3, '2026-01-15 12:23:20', 15, 0),
+(31, 'tesztelgetek', 'legelek@gmail.com', '$2b$10$rfMu9XbaZpbWVNnzJdHGfudlwsnfrCT1zhlwX/HZ2SRR9LD8Vz4jC', 6, 23, 161, 2130, 1799, 1799, 16, 0, 3, '2026-01-16 09:15:23', 33, 0),
+(32, 'tesztelgetek123', '123@gmads.com', '$2b$10$ZwHWxClvUUtJnUuMzWm6VuVkBFBFF2VJp5Ua9I9eWdkfKVAv7NUcW', 6, 22, 9, 264154, 13230, 14930, 56, 16, 22, '2026-01-22 12:13:01', 201, 0),
+(33, 'tesztelget321', 'asdasd@gmasd.com', '$2b$10$.TtoEeAQBp51kAvAq6sTx.CjXc9eAefMQGt1A.DRLFS9dN/r8kvG2', 6, 5, 68, 367, 50, 50, 5, 0, 3, '2026-01-28 10:38:24', 12, 0),
+(34, 'tesztelgetnek123', '123123@gmail.com', '$2b$10$dZD9./1P2xq/5T.LSzqx.eZ1nfjeu2yXfC1Kq3FrMkcyN7k52Fgmm', 6, 9, 99, 1228, 50, 50, 5, 0, 3, '2026-02-02 09:42:17', 24, 0),
+(35, 'tesztelgetnek321', '123214@gmail.com', '$2b$10$ZXhg4ZqcvvpemEwY7N4HMeJhxS1qMgQmAr9gsi/KYFa4FBDZYd3AG', 6, 7, 120, 871, 50, 50, 5, 0, 3, '2026-02-02 10:23:53', 18, 0),
+(36, 'tesztelgethetek123', '123125512@gmail.com', '$2b$10$fqByP.992ytXzswdrfRBK.BxJa7QMLv336OlQXlYetDzYVQmCEDbi', 6, 6, 59, 533, 70, 70, 10, 0, 3, '2026-02-02 11:59:49', 6, 0),
+(37, 'magus', 'asdsadsa@gmail.com', '$2b$10$zZJ/KPUp59RNyYwsEhPwCeNKRib9vVOAzBhGI8ZypnPTyse2fobC6', 7, 86, 1260, 11504, 60, 60, 0, 8, 1, '2026-02-03 07:59:30', 243, 0),
+(38, 'ijaszalex', 'asdas@gmail.com', '$2b$10$hhXWLddhE7slg89meMjBEO3Y2.qPX5DYNJYs30HizHfQZSk0P4Jla', 8, 1, 0, 100, 40, 40, 3, 2, 2, '2026-02-03 13:16:38', 0, 0),
+(39, 'progresstest', 'progtest@gmail.com', '$2b$10$Kr3Sv/LgNIPM0l9rsGduGOrxL4M7AHDDiXp34pGZJf3zIm2as6XWi', 6, 27, 25, 2920, 105, 105, 36, 0, 3, '2026-02-04 09:46:06', 27, 0),
+(40, 'progresstest1', 'asdasavaf@gmail.com', '$2b$10$ZAyoSgXy/am2d1KfjIDKj.cdjQEuPvfvsHn0pOUem7e9rFzVmZJIa', 6, 32, 446, 589, 37, 135, 48, 0, 3, '2026-02-04 11:12:30', 33, 0),
+(41, 'progresstestmagus', 'asdasdad@gmail.com', '$2b$10$FWkB5.U0K1KiOB8r/5Qi8uYMYrjDu2nM1/JQ1HrIVezJYC/tBn/pi', 7, 33, 404, 1672, 30, 30, 0, 5, 1, '2026-02-04 12:17:05', 96, 0),
+(42, 'progresstestijasz', 'asdweq@gmail.com', '$2b$10$ZRFBF6dw3pAH6hEYh1pJWe7eIgIOgYcZ.yteB9p8tk/Q5TCFawHGu', 8, 23, 62, 923, 56, 115, 9, 2, 2, '2026-02-04 12:59:04', 39, 0),
+(43, 'segg', 'segg@gmail.com', '$2b$10$rqbaewHnShRGEghVvrVaMeTsLPyqm/zP9gOKt0hWtl0xo7sPMAMou', 7, 3, 33, 152, 18, 30, 0, 5, 1, '2026-02-06 18:46:55', 6, 0),
+(44, 'kurva', 'kurvasd@gmail.com', '$2b$10$edizHNBps88okJumXFmLV.F.PSsYsZH0EmeP.k96mWPRSGejIU5Qm', 7, 10000010, 147483936, 99624901, 2147483647, 2147483647, 1000000000, 10000001, 10000000, '2026-02-06 19:28:32', 30, 1),
+(45, 'csöves', 'asdaskjasv@gmail.com', '$2b$10$iqkWktjIKpko7WKSSbW1k.KY.iti0erasTdNPU1jdbCPIRenXyJWy', NULL, 1, 0, 0, 50, 50, 5, 5, 2, '2026-02-08 20:24:37', 0, 0);
 
 -- --------------------------------------------------------
 
@@ -530,7 +535,24 @@ INSERT INTO `player_quests` (`id`, `player_id`, `quest_id`, `progress`, `status`
 (298, 42, 3, 15, 'claimed'),
 (299, 42, 4, 1, 'claimed'),
 (300, 42, 5, 16, 'in_progress'),
-(303, 42, 11, 0, 'locked');
+(303, 42, 11, 0, 'locked'),
+(304, 43, 1, 4, 'in_progress'),
+(305, 43, 2, 0, 'locked'),
+(306, 43, 3, 0, 'locked'),
+(307, 43, 4, 0, 'locked'),
+(308, 43, 5, 0, 'locked'),
+(311, 43, 10, 0, 'locked'),
+(312, 44, 1, 5, 'completed'),
+(313, 44, 2, 0, 'locked'),
+(314, 44, 3, 0, 'locked'),
+(315, 44, 4, 0, 'locked'),
+(316, 44, 5, 0, 'locked'),
+(319, 44, 10, 0, 'locked'),
+(320, 45, 1, 0, 'in_progress'),
+(321, 45, 2, 0, 'locked'),
+(322, 45, 3, 0, 'locked'),
+(323, 45, 4, 0, 'locked'),
+(324, 45, 5, 0, 'locked');
 
 -- --------------------------------------------------------
 
@@ -713,7 +735,7 @@ ALTER TABLE `achievements`
 -- AUTO_INCREMENT a táblához `birtokol`
 --
 ALTER TABLE `birtokol`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=145;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=146;
 
 --
 -- AUTO_INCREMENT a táblához `classes`
@@ -737,13 +759,13 @@ ALTER TABLE `paths`
 -- AUTO_INCREMENT a táblához `players`
 --
 ALTER TABLE `players`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=43;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=46;
 
 --
 -- AUTO_INCREMENT a táblához `player_quests`
 --
 ALTER TABLE `player_quests`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=304;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=325;
 
 --
 -- AUTO_INCREMENT a táblához `quests_master`
