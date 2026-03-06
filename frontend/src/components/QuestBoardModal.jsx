@@ -87,7 +87,7 @@ export default function QuestBoardModal({
       >
         <div
           className="absolute inset-0 bg-cover bg-center pointer-events-none"
-          style={{ backgroundImage: 'url("./src/assets/pics/QUESTBOARD.png")' }}
+          style={{ backgroundImage: 'url("public/images/QUESTBOARD.png")' }}
         />
 
         <button
