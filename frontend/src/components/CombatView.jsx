@@ -1266,7 +1266,7 @@ if (classKey === "archer") {
 
         if (boss && player.id) {
           try {
-            const res = await fetch(`http://localhost:3000/api/quests/${player.id}`);
+            const res = await fetch(`https://nodejs202.dszcbaross.edu.hu/api/quests/${player.id}`);
             const data = await res.json();
 
           const activeClassQuest = data.find(
@@ -2269,7 +2269,7 @@ if (poisonNow && playerHPRef.current > 0) {
   async function questBattleWonEvent() {
   if (!player?.id) return;
   try {
-    await fetch("http://localhost:3000/api/quests/event", {
+    await fetch("https://nodejs202.dszcbaross.edu.hu/api/quests/event", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -2287,7 +2287,7 @@ async function questEnemyDefeatedEvent() {
 
   try {
     const isBossDefeated = enemy?.role === "boss"; // ez biztosabb, mint a boss flag
-    await fetch("http://localhost:3000/api/quests/event", {
+    await fetch("https://nodejs202.dszcbaross.edu.hu/api/quests/event", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -2325,7 +2325,7 @@ async function handleContinue() {
   const { xpGain, goldGain } = rollRewards();
 
   try {
-    await fetch("http://localhost:3000/api/combat/reward", {
+    await fetch("https://nodejs202.dszcbaross.edu.hu/api/combat/reward", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -2464,7 +2464,7 @@ if (!isLastWave) {
     const { xpGain, goldGain } = rollRewards();
 
     try {
-      const res = await fetch("http://localhost:3000/api/combat/reward", {
+      const res = await fetch("https://nodejs202.dszcbaross.edu.hu/api/combat/reward", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

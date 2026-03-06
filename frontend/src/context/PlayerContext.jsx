@@ -71,7 +71,7 @@ const [derivedStats, setDerivedStats] = useState(null);
 const refreshFullStats = useCallback(async (playerId) => {
   if (!playerId) return;
 
-  const res = await fetch(`http://localhost:3000/api/player/${playerId}/full-stats`);
+  const res = await fetch(`https://nodejs202.dszcbaross.edu.hu/api/player/${playerId}/full-stats`);
   if (!res.ok) throw new Error("full-stats fetch error");
   const data = await res.json();
 

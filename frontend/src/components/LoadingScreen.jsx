@@ -67,7 +67,7 @@ export default function LoadingScreen({ onDone }) {
   // Tippek lekérése (Változatlan)
   useEffect(() => {
     // ha úgyis skip, nem muszáj fetch-elni (de nem baj ha marad)
-    fetch("http://localhost:3000/api/tips")
+    fetch("https://nodejs202.dszcbaross.edu.hu/api/tips")
       .then((res) => res.json())
       .then((data) => {
         const loadedTips = data.tips || [];

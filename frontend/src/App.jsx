@@ -185,7 +185,7 @@ function handleGoAdventure() {
   async function handleLogin(username) {
     try {
       const res = await fetch(
-        `http://localhost:3000/api/user/${encodeURIComponent(username)}`
+        `https://nodejs202.dszcbaross.edu.hu/api/user/${encodeURIComponent(username)}`
       );
       const data = await res.json();
       if (!data.exists) return alert("User nem található (backend)");
@@ -401,7 +401,7 @@ onEnd={async (result) => {
     if (result.victory) {
       // csak akkor complete, ha van questId
       if (questCombat?.questId && player?.id) {
-        await fetch("http://localhost:3000/api/quests/complete", {
+        await fetch("https://nodejs202.dszcbaross.edu.hu//api/quests/complete", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({

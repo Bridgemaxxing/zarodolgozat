@@ -66,7 +66,7 @@ if (stat === "hp") {
   try {
     setSaving(true);
 
-    const res = await fetch(`http://localhost:3000/api/players/${player.id}`, {
+    const res = await fetch(`https://nodejs202.dszcbaross.edu.hu/api/players/${player.id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(updated),

@@ -30,7 +30,7 @@ export default function QuestBoardModal({
     if (!playerId) return;
     try {
       setLoading(true);
-      const res = await fetch(`http://localhost:3000/api/quests/${playerId}`);
+      const res = await fetch(`https://nodejs202.dszcbaross.edu.hu/api/quests/${playerId}`);
       const data = await res.json();
 
       const filtered = (data || []).filter(

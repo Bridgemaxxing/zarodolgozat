@@ -166,7 +166,7 @@ export default function Inv({ onClose }) {
      ============================== */
   useEffect(() => {
     if (!showInventory || !player?.id) return;
-    fetch(`http://localhost:3000/api/inventory/${player.id}`)
+    fetch(`https://nodejs202.dszcbaross.edu.hu/api/inventory/${player.id}`)
       .then((res) => {
         if (!res.ok) throw new Error("Inventory fetch error");
         return res.json();
@@ -185,7 +185,7 @@ export default function Inv({ onClose }) {
      ============================== */
 function equipItem(ownedId, slotKey) {
   if (!player?.id || !ownedId) return;
-  fetch("http://localhost:3000/api/inventory/equip", {
+  fetch("https://nodejs202.dszcbaross.edu.hu/api/inventory/equip", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -263,7 +263,7 @@ function handleClose() {
 
 function unequipItem(ownedId) {
   if (!player?.id || !ownedId) return;
-  fetch("http://localhost:3000/api/inventory/unequip", {
+  fetch("https://nodejs202.dszcbaross.edu.hu/api/inventory/unequip", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({

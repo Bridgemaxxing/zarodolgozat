@@ -13,10 +13,10 @@ app.use(express.json());
 app.use(cors());
 
 const pool = mysql.createPool({
-  host: "localhost",
-  user: "root",
-  password: "",
-  database: "sk_projekt",
+  host: "192.168.255.103:3306",
+  user: "u197_XKDMIOZiMa",
+  password: "FTc@l3nB20Iv6!m^Z0CJQ.6L",
+  database: "s197_db",
 });
 // ---------------- XP LOGIKA (SZINTLÉPÉSHEZ) ----------------
 

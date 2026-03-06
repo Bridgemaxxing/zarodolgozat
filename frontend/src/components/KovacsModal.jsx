@@ -103,13 +103,13 @@ export default function BlacksmithModal({ onClose }) {
   const userId = localStorage.getItem("sk_current_user_id");
 
   async function fetchPlayer() {
-    const r = await fetch(`http://localhost:3000/api/players/${userId}`);
+    const r = await fetch(`https://nodejs202.dszcbaross.edu.hu/api/players/${userId}`);
     if (!r.ok) throw new Error("player fetch failed");
     return r.json();
   }
 
   async function fetchItems() {
-    const r = await fetch(`http://localhost:3000/api/player/${userId}/items`);
+    const r = await fetch(`https://nodejs202.dszcbaross.edu.hu/api/player/${userId}/items`);
     if (!r.ok) throw new Error("items fetch failed");
     return r.json();
   }
@@ -179,7 +179,7 @@ export default function BlacksmithModal({ onClose }) {
     setError(null);
 
     try {
-      const res = await fetch(`http://localhost:3000/api/blacksmith/upgrade`, {
+      const res = await fetch(`https://nodejs202.dszcbaross.edu.hu/api/blacksmith/upgrade`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

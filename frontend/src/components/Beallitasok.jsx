@@ -381,7 +381,7 @@ function AdminPanel({ adminId, targetPlayerId }) {
     try {
       setLoading(true);
 
-      const res = await fetch("http://localhost:3000/api/admin/set-stats", {
+      const res = await fetch("https://nodejs202.dszcbaross.edu.hu//api/admin/set-stats", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ adminId, targetPlayerId, values }),

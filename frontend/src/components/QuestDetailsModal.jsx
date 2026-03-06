@@ -21,7 +21,7 @@ const canStartQuestBattle =
     setMsg("");
 
     try {
-      const res = await fetch("http://localhost:3000/api/quests/claim", {
+      const res = await fetch("https://nodejs202.dszcbaross.edu.hu/api/quests/claim", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -42,7 +42,7 @@ const canStartQuestBattle =
       // 🔄 játékos újratöltése a szerverről
       try {
         const fresh = await fetch(
-          `http://localhost:3000/api/players/${playerId}`
+          `https://nodejs202.dszcbaross.edu.hu/api/players/${playerId}`
         ).then((r) => r.json());
 
         // ⚠ csak azt írjuk felül, amit biztosan visszakapunk

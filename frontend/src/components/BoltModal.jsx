@@ -73,11 +73,11 @@ const itemsToShow =
 useEffect(() => {
   if (!userId) return;
 
-  fetch(`http://localhost:3000/api/player/${userId}/full-stats`)
+  fetch(`https://nodejs202.dszcbaross.edu.hu/api/player/${userId}/full-stats`)
     .then(r => r.json())
     .then(setFullStats);
 
-  fetch(`http://localhost:3000/api/inventory/${userId}`)
+  fetch(`https://nodejs202.dszcbaross.edu.hu/api/inventory/${userId}`)
     .then(r => r.json())
     .then(setInventoryItems);
 }, [userId]);
@@ -85,23 +85,23 @@ useEffect(() => {
   const classId = fullStats?.player?.class_id;
   if (!userId || !classId) return;
 
-  fetch(`http://localhost:3000/api/items?classId=${classId}`)
+  fetch(`https://nodejs202.dszcbaross.edu.hu/api/items?classId=${classId}`)
     .then(r => r.json())
     .then(setShopItems);
 }, [userId, fullStats?.player?.class_id]);
 
 const refreshAll = async () => {
-  const stats = await fetch(`http://localhost:3000/api/player/${userId}/full-stats`).then(r => r.json());
+  const stats = await fetch(`https://nodejs202.dszcbaross.edu.hu/api/player/${userId}/full-stats`).then(r => r.json());
   setFullStats(stats);
 
-  const inv = await fetch(`http://localhost:3000/api/inventory/${userId}`).then(r => r.json());
+  const inv = await fetch(`https://nodejs202.dszcbaross.edu.hu/api/inventory/${userId}`).then(r => r.json());
   setInventoryItems(inv);
 };
 
   const buy = async (itemId) => {
     setBusy(true);
     try {
-      const res = await fetch("http://localhost:3000/api/shop/buy", {
+      const res = await fetch("https://nodejs202.dszcbaross.edu.hu/api/shop/buy", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ playerId: Number(userId), itemId })
@@ -124,7 +124,7 @@ const refreshAll = async () => {
   const sell = async (itemId) => {
     setBusy(true);
     try {
-      const res = await fetch("http://localhost:3000/api/shop/sell", {
+      const res = await fetch("https://nodejs202.dszcbaross.edu.hu/api/shop/sell", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ playerId: Number(userId), itemId })
@@ -163,7 +163,7 @@ const healForGold = async () => {
 
   setBusy(true);
   try {
-    const res = await fetch("http://localhost:3000/api/shop/heal", {
+    const res = await fetch("https://nodejs202.dszcbaross.edu.hu/api/shop/heal", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ playerId: Number(userId) }),
@@ -194,7 +194,7 @@ console.log("HEAL AFTER setItem", {
 const heal = async () => {
   setBusy(true);
   try {
-    const res = await fetch("http://localhost:3000/api/shop/heal", {
+    const res = await fetch("https://nodejs202.dszcbaross.edu.hu/api/shop/heal", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ playerId: Number(userId) }),
