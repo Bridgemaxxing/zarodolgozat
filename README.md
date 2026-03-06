@@ -37,16 +37,16 @@ A játék célja, hogy a játékos folyamatosan fejlődjön, új kihívásokkal 
 
 
 ### Kovácsműhely
-<img src="images_for_readme/kovacs.png" alt="kovacs" width="800"/>
+<img src="images_for_readme/kovacs.PNG" alt="kovacs" width="800"/>
 
 
 ### Küldetések
-<img src="images_for_readme/quests.png" alt="quests" width="800"/>
+<img src="images_for_readme/quests.PNG" alt="quests" width="800"/>
 
 
 
 ### Adatbázis
-<img src="images_for_readme/adatbazis.png" alt="SK Project készítők karikatúrája" width="800"/>
+<img src="images_for_readme/adatbazis.PNG" alt="SK Project készítők karikatúrája" width="800"/>
 
 
 
@@ -171,3 +171,5 @@ A projekt futtatásához szükség van a frontend, a backend és az adatbázis m
 <p><i>A projekt készítőcsapata</i></p>
 
 <img src="images_for_readme/karikatura.png" alt="SK Project készítők karikatúrája" width="800"/>
+
+</div>
