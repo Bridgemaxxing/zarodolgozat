@@ -83,6 +83,11 @@ export default function DeckEditorModal({ onClose }) {
       alert(`A paklinak legalább ${MIN_DECK_SIZE} kártyát kell tartalmaznia.`);
       return;
     }
+    const uniqueCount = new Set(tempDeck).size;
+  if (uniqueCount < 5) {
+  alert("A paklinak legalább 5 különböző kártyát kell tartalmaznia.");
+  return;
+  }
 
     setPlayer((prev) => ({
       ...prev,
@@ -224,9 +229,8 @@ export default function DeckEditorModal({ onClose }) {
         {/* LÁBLÉC GOMBOK */}
         <div className="mt-4 flex justify-between items-center">
           <div className="text-xs text-gray-400">
-            Tipp: bal oldalt kattintva hozzáadsz, jobb oldalt kattintva
-            eltávolítasz a pakliból (1 példányt).
-          </div>
+  Tipp: bal oldalt kattintva hozzáadsz, jobb oldalt kattintva eltávolítasz a pakliból (1 példányt). Minimum 10 lap és legalább 5 különböző kártya szükséges.
+</div>
           <div className="space-x-2">
             <button
               className="px-4 py-2 bg-gray-700 rounded hover:bg-gray-600"
