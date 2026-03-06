@@ -56,7 +56,7 @@ export default function DeckEditorModal({ onClose }) {
   }, [player?.deck]);
 
   const MAX_DECK_SIZE = 30;
-  const MIN_DECK_SIZE = 10;
+  const MIN_DECK_SIZE = 15;
 
   function handleAddToDeck(abilityId) {
     if (tempDeck.length >= MAX_DECK_SIZE) return;
