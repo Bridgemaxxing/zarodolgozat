@@ -20,33 +20,33 @@ A játék célja, hogy a játékos folyamatosan fejlődjön, új kihívásokkal 
 ## Képek a projektről
 
 ### Combat rendszer
-![Combat rendszer placeholder](images_for_readme/combat.png)
+<img src="images_for_readme/combat.png" alt="combat" width="800"/>
 
 
 ### Hub
-![Hub placeholder](images_for_readme/hub.png)
+<img src="images_for_readme/hub.png" alt="hub" width="800"/>
 
 
 ### Inventory rendszer
-![Inventory placeholder](images_for_readme/inv.png)
+<img src="images_for_readme/inv.png" alt="inventory" width="800"/>
 
 
 
 ### Bolt
-![Bolt placeholder](images_for_readme/bolt.png)
+<img src="images_for_readme/bolt.png" alt="bolt" width="800"/>
 
 
 ### Kovácsműhely
-![Kovácsműhely placeholder](images_for_readme/kovacs.png)
+<img src="images_for_readme/kovacs.png" alt="kovacs" width="800"/>
 
 
 ### Küldetések
-![Küldetések placeholder](images_for_readme/quests.png)
+<img src="images_for_readme/quests.png" alt="quests" width="800"/>
 
 
 
 ### Adatbázis
-![Adatbázis placeholder](images_for_readme/adatbazis.png)
+<img src="images_for_readme/adatbazis.png" alt="SK Project készítők karikatúrája" width="800"/>
 
 
 
