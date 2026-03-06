@@ -127,10 +127,10 @@ export default function ClassSelect({ onNext }) {
   </span>
 
   {/* Statok */}
-  <div className="classStats absolute bottom-10 left-1/2 -translate-x-1/2 text-center text-gray-200 font-[Jersey 10] text-base drop-shadow-lg">
-    <div>HP: {cls.base_hp}</div>
+  <div className="classStats absolute top-10 left-1/2 -translate-x-1/2 text-center text-gray-200 font-[Jersey 10] text-base drop-shadow-lg">
+    
     <div>
-      STR: {cls.base_strength} • INT: {cls.base_intellect} • AGI: {cls.base_dexterity}
+     majd lesz valami 
     </div>
   </div>
 </div>
