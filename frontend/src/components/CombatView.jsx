@@ -66,7 +66,7 @@ const ARCANE_CHOICES = [
     name: "Arcane Burst",
     desc: "30% enemy maxHP",
     kind: "damage_percent",
-    percent: 0.3,
+    percent: 0.18,
     manaCost: 5,
     img: "/cards/common/spell_arcane_arcanepotency.jpg",
   },
@@ -115,6 +115,35 @@ function resolveCardImageFromAbility(ab) {
   if (typeof ab.image === "string" && ab.image.startsWith("/cards/")) return ab.image;
   if (ab.id && ab.rarity) return `/cards/${ab.rarity}/${ab.id}.png`;
   return "";
+}
+
+function getCardStaminaCost(card) {
+  if (!card) return 99;
+
+  // basic/common attack ingyenes
+  if (card.type === "attack" && card.rarity === "common") return 0;
+
+  // heal
+  if (card.type === "heal") {
+    if ((card.heal ?? 0) >= 30) return 3;
+    return 2;
+  }
+
+  // defend / stun / evade / taunt
+  if (
+    card.type === "defend" ||
+    (card.stunTurns ?? 0) > 0 ||
+    (card.evasionTurns ?? 0) > 0 ||
+    (card.petTauntTurns ?? 0) > 0
+  ) {
+    return 2;
+  }
+
+  // rarity fallback
+  if (card.rarity === "epic") return 2;
+  if (card.rarity === "rare") return 1;
+
+  return 1;
 }
 
 const CLASS_CONFIG = {
@@ -668,6 +697,9 @@ export default function CombatView({
   const maxHPFromPlayer = derivedStats?.max_hp ?? player?.max_hp ?? initialHPFromPlayer;
   const [playerHP, setPlayerHP] = useState(initialHPFromPlayer);
 
+  const PLAYER_MAX_STAMINA = 3;
+  const [playerStamina, setPlayerStamina] = useState(PLAYER_MAX_STAMINA);
+
   // =========================
 // CLEAN COMBAT TUTORIAL (RESET VERSION)
 // =========================
@@ -896,7 +928,8 @@ useEffect(() => { petTauntCdRef.current = petTauntCd; }, [petTauntCd]);
   const [enemyVulnerability, setEnemyVulnerability] = useState(null);
   const [enemyBleed, setEnemyBleed] = useState(null);
   const [playerEvasionTurns, setPlayerEvasionTurns] = useState(0);
-const [playerPoison, setPlayerPoison] = useState(null);
+  const [playerPoison, setPlayerPoison] = useState(null);
+
 
 const playerPoisonRef = useRef(null);
 useEffect(() => {
@@ -1226,6 +1259,7 @@ if (classKey === "archer") {
   setPetTauntCd((prev) => Math.max(0, (prev || 0) - 1));
 }
 
+    setPlayerStamina((prev) => Math.min(PLAYER_MAX_STAMINA, prev + 1));
     setTurn("player");
   }
 
@@ -1343,6 +1377,7 @@ setBattleOver(false);
 setTurn("player");
 setDefending(false);
 setArcanePickerOpen(false);
+setPlayerStamina(PLAYER_MAX_STAMINA);
 
 if (remainingEnemies.length > 0) {
   setLog([`${currentEnemy.name} megtámadott! (ERŐSÍTÉS: +${remainingEnemies.length} ellenség közeleg...)`]);
@@ -1597,6 +1632,14 @@ function castPetTaunt() {
   // cooldown gate
   if (petTauntCdRef.current > 0) return;
 
+  const cost = 1;
+  if (playerStamina < cost) {
+    pushLog("Nincs elég stamina a Pet Taunthoz!");
+    return;
+  }
+
+  setPlayerStamina((prev) => Math.max(0, prev - cost));
+
   // taunt
   const turns = PET_TAUNT_DEFAULT_TURNS;
   setPetTauntTurns((prev) => Math.max(prev, turns));
@@ -1641,33 +1684,41 @@ function castPetTaunt() {
   }
 
   // ===== PLAY CARD =====
-  function playCardAt(slotIndex) {
-    if (tutBlocking && tutStep !== 4) return; 
-    const card = handRef.current?.[slotIndex];
-    if (!card) return;
-    if (card._played) return;
+ function playCardAt(slotIndex) {
+  if (tutBlocking && tutStep !== 4) return; 
+  const card = handRef.current?.[slotIndex];
+  if (!card) return;
+  if (card._played) return;
 
-    if (battleOverRef.current) return;
-    if (turn !== "player" || !enemy) return;
+  if (battleOverRef.current) return;
+  if (turn !== "player" || !enemy) return;
 
-    setHand((prev) => {
-      const copy = [...prev];
-      const c = copy[slotIndex];
-      if (!c) return prev;
-      copy[slotIndex] = { ...c, _played: true };
-      return copy;
-    });
-
-    applyCardEffects(card);
-
-    setPendingReplaces((prev) => {
-      const copy = [...prev];
-      copy[slotIndex] = card;
-      return copy;
-    });
-
-    setTurn("enemy");
+  const cost = getCardStaminaCost(card);
+  if (playerStamina < cost) {
+    pushLog(`Nincs elég stamina! (${cost} kell)`);
+    return;
   }
+
+  setPlayerStamina((prev) => Math.max(0, prev - cost));
+
+  setHand((prev) => {
+    const copy = [...prev];
+    const c = copy[slotIndex];
+    if (!c) return prev;
+    copy[slotIndex] = { ...c, _played: true };
+    return copy;
+  });
+
+  applyCardEffects(card);
+
+  setPendingReplaces((prev) => {
+    const copy = [...prev];
+    copy[slotIndex] = card;
+    return copy;
+  });
+
+  setTurn("enemy");
+}
 
   function applyCardEffects(card) {
     if (battleOverRef.current) return;
@@ -1741,10 +1792,10 @@ function castPetTaunt() {
           const bonus = Math.floor(playerStrength * 0.2) + Math.floor(playerLevel * 0.1);
           baseMin += bonus; baseMax += bonus;
         } else if (classKey === "mage") {
-          const bonus = Math.floor(playerIntellect * 0.4) + Math.floor(playerLevel * 0.15);
+          const bonus = Math.floor(playerIntellect * 0.18) + Math.floor(playerLevel * 0.15);
           baseMin += bonus; baseMax += bonus;
         } else if (classKey === "archer") {
-          const bonus = Math.floor(playerAgi * 0.65) + Math.floor(playerLevel * 0.25);
+          const bonus = Math.floor(playerAgi * 0.35) + Math.floor(playerLevel * 0.25);
           baseMin += bonus; baseMax += bonus;
         }
 
@@ -1914,7 +1965,7 @@ function castPetTaunt() {
         pushLog(`${card.name}: védekezés aktiválva ${card.defenseTurns} körre!`);
       } else {
         setDefending(1);
-        pushLog("Védekezés aktiválva – a következő ütés felezve.");
+        pushLog("Védekezés aktiválva – a következő ütés csökkentve.");
       }
 
       if (card.stunTurns && card.stunTurns > 0) {
@@ -2202,10 +2253,10 @@ if (poisonNow && playerHPRef.current > 0) {
         const [minDmg, maxDmg] = enemy.dmg;
         let dmg = Math.floor(Math.random() * (maxDmg - minDmg + 1)) + minDmg;
 
-        if (defending && defending > 0) {
-          dmg = Math.floor(dmg / 2);
-          setDefending((prev) => Math.max(0, (prev || 1) - 1));
-        }
+       if (defending && defending > 0) {
+      dmg = Math.floor(dmg * 0.7);
+      setDefending((prev) => Math.max(0, (prev || 1) - 1));
+    }
 
         let final = getMitigatedDamage(dmg, playerDefenseNow);
 
@@ -2399,7 +2450,9 @@ async function handleContinue() {
     setArcanePickerOpen(false);
     setDefending(false);
     setTurn("player");
+    setPlayerStamina((prev) => Math.min(PLAYER_MAX_STAMINA, prev + 1));
     setLastRewards(null);
+    
 
     // következő enemy betöltése
     const nextEnemy = pendingEnemies[0];
@@ -3045,6 +3098,14 @@ return (
           {/* KÁRTYÁK (HAND) */}
           {!battleOver && (
             <div ref={tutHandRef} className="absolute left-1/2 -translate-x-1/2 flex gap-4 z-50" style={{ bottom: "-80px", pointerEvents: allowHand ? "auto" : "none" }}>
+              {!battleOver && (
+            <div
+              className="absolute left-1/2 -translate-x-1/2 z-70 px-4 py-2 rounded-lg border-2 border-gray-700 bg-black/70 text-xl pixel-text-sharp"
+              style={{ bottom: "500px" }}
+            >
+              Stamina: {playerStamina}/{PLAYER_MAX_STAMINA}
+            </div>
+          )}
               {hand.map((card, slotIndex) => {
                 if (!card) return <div key={`empty-${slotIndex}`} className="w-40 h-60 rounded-xl border-4 border-gray-700 bg-black/30" />;
                 const rs = rarityStyle[card.rarity] ?? rarityStyle.common;
