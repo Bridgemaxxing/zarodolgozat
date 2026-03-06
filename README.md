@@ -20,20 +20,20 @@ A játék célja, hogy a játékos folyamatosan fejlődjön, új kihívásokkal 
 ## Képek a projektről
 
 ### Combat rendszer
-<img src="images_for_readme/combat.png" alt="combat" width="800"/>
+<img src="images_for_readme/combat.PNG" alt="combat" width="800"/>
 
 
 ### Hub
-<img src="images_for_readme/hub.png" alt="hub" width="800"/>
+<img src="images_for_readme/hub.PNG" alt="hub" width="800"/>
 
 
 ### Inventory rendszer
-<img src="images_for_readme/inv.png" alt="inventory" width="800"/>
+<img src="images_for_readme/inv.PNG" alt="inventory" width="800"/>
 
 
 
 ### Bolt
-<img src="images_for_readme/bolt.png" alt="bolt" width="800"/>
+<img src="images_for_readme/bolt.PNG" alt="bolt" width="800"/>
 
 
 ### Kovácsműhely
