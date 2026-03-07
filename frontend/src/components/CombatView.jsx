@@ -3218,13 +3218,13 @@ return (
               {!battleOver && turn === "player" && (
        
                     <button
-            onClick={passTurn}
-            className="absolute left-1/2 -translate-x-1/2 z-[80] px-8 py-3 rounded-lg border-2 border-gray-700 bg-black/80 hover:bg-black text-white pixel-text-sharp"
-            style={{ bottom: "240px", marginLeft: "500px" }}
-          >
-            PASS TURN
-          </button>
-        )}
+                    onClick={passTurn}
+                    className="absolute left-1/2 -translate-x-1/2 z-[80] px-8 py-3 rounded-lg border-2 border-gray-700 bg-black/80 hover:bg-black text-white pixel-text-sharp"
+                    style={{ bottom: "240px", marginLeft: "500px" }}
+                  >
+                    PASS TURN
+                  </button>
+                )}
               {!battleOver && (
             <div
               className="absolute left-1/2 -translate-x-1/2 z-70 px-4 py-2 rounded-lg border-2 border-gray-700 bg-black/70 text-xl pixel-text-sharp"
