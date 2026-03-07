@@ -1268,7 +1268,7 @@ useEffect(() => {
     setPendingReplaces(empty);
     pendingRef.current = empty;
   }
-function finishEnemyTurnToPlayer({ staminaMode = "normal" } = {}) {
+function finishEnemyTurnToPlayer() {
   if (enemyFrenzyTurnsRef.current > 0) {
     const next = Math.max(0, enemyFrenzyTurnsRef.current - 1);
     enemyFrenzyTurnsRef.current = next;
@@ -1288,17 +1288,8 @@ function finishEnemyTurnToPlayer({ staminaMode = "normal" } = {}) {
     setPetTauntCd((prev) => Math.max(0, (prev || 0) - 1));
   }
 
-  setPlayerStamina((prev) => {
-    if (staminaMode === "normal") {
-      return Math.min(PLAYER_MAX_STAMINA, prev + 1);
-    }
-
-    if (staminaMode === "stun-skip") {
-      return Math.max(1, prev);
-    }
-
-    return prev;
-  });
+  // ✅ egyetlen központi stamina regen szabály
+  setPlayerStamina((prev) => Math.min(PLAYER_MAX_STAMINA, prev + 1));
 
   setTurn("player");
 }
@@ -1707,8 +1698,8 @@ function passTurn() {
   if (battleOverRef.current) return;
   if (turn !== "player" || !enemy) return;
 
-  setPlayerStamina((prev) => Math.min(PLAYER_MAX_STAMINA, prev + 1));
-  pushLog("Passzoltál. +1 stamina.");
+ //setPlayerStamina((prev) => Math.min(PLAYER_MAX_STAMINA, prev + 1)); kivettem teszt képp, de lehet vissza teszem még idk
+  pushLog("Passzoltál.");
   setTurn("enemy");
 }
 
@@ -2334,7 +2325,7 @@ if (poisonNow && playerHPRef.current > 0) {
       }
 
       debugStun("ENEMY TURN SKIPPED BY STUN - BEFORE FINISH");
-      finishEnemyTurnToPlayer({ staminaMode: "stun-skip" });
+      finishEnemyTurnToPlayer();
       return;
     }
       if (playerEvasionTurns > 0 && enemyHP > 0) {
@@ -2565,7 +2556,7 @@ async function handleContinue() {
     setArcanePickerOpen(false);
     setDefending(false);
     setTurn("player");
-    setPlayerStamina((prev) => Math.min(PLAYER_MAX_STAMINA, prev + 1));
+    //setPlayerStamina((prev) => Math.min(PLAYER_MAX_STAMINA, prev + 1)); ezt is kiszettem, mert a stamina nem wave-közi, hanem csak körök között töltődik
     setLastRewards(null);
     
 
@@ -3248,9 +3239,22 @@ return (
                     <img src={card.image} alt={card.name} className="absolute inset-0 w-full h-full object-cover" />
                     <div className="absolute bottom-0 w-full bg-black/70 text-center p-1 text-sm pixel-text-sharp">
                       <div className="text-lg">{card.name}</div>
-                      {card.type === "attack" && <div className="text-xs">Dmg: {card.dmg?.[0]}–{card.dmg?.[1]} {card.hits > 1 ? `x${card.hits}` : ""}</div>}
-                      {card.type === "heal" && <div className="text-xs">Heal: {card.heal} {card.petHeal ? `(Pet:${card.petHeal})` : ""}</div>}
-                      {card.petTauntTurns > 0 && <div className="text-[10px] text-emerald-300 tracking-tighter">Taunt: {card.petTauntTurns} kör</div>}
+
+                      <div className="text-md text-yellow-300">
+                        Stamina: {getCardStaminaCost(card)}
+                      </div>
+
+                      {card.hits > 1 && (
+                        <div className="text-[10px] text-gray-200">
+                          Hits: x{card.hits}
+                        </div>
+                      )}
+
+                      {card.petTauntTurns > 0 && (
+                        <div className="text-[10px] text-emerald-300 tracking-tighter">
+                          Taunt: {card.petTauntTurns} kör
+                        </div>
+                      )}
                     </div>
                   </button>
                 );

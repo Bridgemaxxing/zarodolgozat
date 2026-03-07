@@ -514,20 +514,20 @@ export function buildDefaultDeckForClass(classKey) {
     ];
   }
 
-  if (classKey === "archer") {
-    return [
+ if (classKey === "archer") {
+  return [
     "archer_quick_shot",
     "archer_quick_shot",
     "archer_aimed_shot",
     "archer_poison_arrow",
-    "archer_evasion",
-    "archer_pet_taunt",     // ✅ új
-    "archer_mend_pet",      // ✅ új
+    "archer_mend_pet",
     "archer_snare_trap",
     "archer_multi_shot",
-    "archer_pet_command",   // ✅ új
-    ];
-  }
+    "archer_pet_command",
+    "archer_camouflage",
+    "archer_healing_herbs",
+  ];
+}
 
   // fallback
   return ["warrior_slash", "warrior_slash", "warrior_parry", "warrior_cleave"];
