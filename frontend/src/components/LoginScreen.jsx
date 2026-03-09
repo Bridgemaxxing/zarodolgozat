@@ -137,7 +137,7 @@ export default function LoginScreen({ onLogin }) {
         playsInline
         className="-z-10 absolute top-0 left-0 w-full h-full object-cover object-center"
       >
-        <source src="/video/1.mp4" type="video/mp4" />
+        <source src="/video/1.webm" type="video/webm" />
       </video>
 
       <div className="loginBox relative z-10 w-11/12 sm:w-2/3 md:w-1/3 p-8 text-white shadow-2xl backdrop-blur-sm text-center">
