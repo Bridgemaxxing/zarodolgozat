@@ -148,6 +148,7 @@ export default function Hub({ onGoAdventure, onStartQuestBattle }) {
   // TUTORIAL (Hub)
   // =========================
   const [tutorialStep, setTutorialStep] = useState(0);
+  const [showHubIntro, setShowHubIntro] = useState(false);
 
   // refek a hotzoneokra
   const hzAdventureRef = useRef(null);
@@ -156,11 +157,23 @@ export default function Hub({ onGoAdventure, onStartQuestBattle }) {
   const hzShopRef = useRef(null);
   const hzHomeRef = useRef(null);
 
-  useEffect(() => {
-    if (!player?.id) return;
-    const done = localStorage.getItem(`hub_tutorial_done_${player.id}`) === "1";
-    setTutorialStep(done ? 0 : 1);
-  }, [player?.id]);
+ useEffect(() => {
+  if (!player?.id) return;
+
+  const introDone =
+    localStorage.getItem(`hub_intro_done_${player.id}`) === "1";
+  const tutorialDone =
+    localStorage.getItem(`hub_tutorial_done_${player.id}`) === "1";
+
+  if (!introDone) {
+    setShowHubIntro(true);
+    setTutorialStep(0);
+    return;
+  }
+
+  setShowHubIntro(false);
+  setTutorialStep(tutorialDone ? 0 : 1);
+}, [player?.id]);
 
   const tutorialSteps = {
     1: { ref: hzHomeRef, text: "Kattints az OTTHON-ra (Inventory / Deck / Stats)." },
@@ -169,6 +182,21 @@ export default function Hub({ onGoAdventure, onStartQuestBattle }) {
     4: { ref: hzQuestRef, text: "Kattints a KÜLDETÉSEK-re." },
     5: { ref: hzAdventureRef, text: "Kattints az UTAZÁS-ra (kaland indítása)." },
   };
+
+  function finishHubIntro() {
+  if (player?.id) {
+    localStorage.setItem(`hub_intro_done_${player.id}`, "1");
+  }
+
+  setShowHubIntro(false);
+
+  const tutorialDone =
+    localStorage.getItem(`hub_tutorial_done_${player.id}`) === "1";
+
+  if (!tutorialDone) {
+    setTutorialStep(1);
+  }
+}
 
   function finishTutorial() {
     if (player?.id) localStorage.setItem(`hub_tutorial_done_${player.id}`, "1");
@@ -179,7 +207,8 @@ export default function Hub({ onGoAdventure, onStartQuestBattle }) {
     finishTutorial();
   }
 
-  const tutActive = tutorialStep > 0 && !isAnyModalOpen && !isMenuOpen;
+  const tutActive =
+  !showHubIntro && tutorialStep > 0 && !isAnyModalOpen && !isMenuOpen;
   const pe = (step) => (tutActive && tutorialStep !== step ? "none" : "auto");
 
   // ✅ végső pointerEvents: tutorial + lock összevonva
@@ -392,6 +421,29 @@ export default function Hub({ onGoAdventure, onStartQuestBattle }) {
           showNext={false} 
         />
       )}
+      {showHubIntro && (
+  <div className="hub-intro-overlay">
+    <div className="hub-intro-panel">
+      <h2>Üdvözöllek!</h2>
+
+      <p>
+        Ez az a hely, ahol felkészülhetsz a következő utadra.
+        Itt fejleszthetsz, vásárolhatsz, küldetéseket vállalhatsz,
+        és rendbe teheted, amid van.
+      </p>
+
+      <p>
+        Ha készen állsz, továbbléphetsz az utazás felé.
+      </p>
+
+      <button className="buttonClass" onClick={finishHubIntro}>
+        Tovább
+      </button>
+    </div>
+  </div>
+)}
+
+      
 
       {/* ✅ Beállítások modal */}
       {showSettings && <BeallitasokModal onClose={() => setShowSettings(false)} />}
@@ -475,6 +527,37 @@ export default function Hub({ onGoAdventure, onStartQuestBattle }) {
         
       )}
       */}
+
+<button
+  style={{
+    position: "fixed",
+    bottom: 16,
+    right: 16,
+    zIndex: 999999,
+    padding: "10px 14px",
+    background: "#111",
+    color: "white",
+    border: "1px solid #444",
+    borderRadius: 10,
+    cursor: "pointer",
+    fontFamily: "monospace",
+  }}
+  onClick={() => {
+    if (!player?.id) {
+      console.log("Nincs player.id");
+      return;
+    }
+
+    const key = `hub_intro_done_${player.id}`;
+    localStorage.removeItem(key);
+    setShowHubIntro(true);
+    setTutorialStep(0);
+    console.log("RESET HUB INTRO:", key);
+  }}
+  title="Teszt: újraindítja a Hub intrót"
+>
+  RESET HUB INTRO
+</button>
     </div>
   );
 }

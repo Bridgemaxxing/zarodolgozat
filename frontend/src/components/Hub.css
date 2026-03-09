@@ -230,3 +230,36 @@
   transform: translateY(10px);
   transition: all 0.2s ease-in-out;
 }
+
+.hub-intro-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 30000;
+  background: rgba(0, 0, 0, 0.82);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.hub-intro-panel {
+  width: min(680px, 92vw);
+  background: rgba(18, 18, 18, 0.96);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 14px;
+  padding: 28px;
+  color: #f2f2f2;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+}
+
+.hub-intro-panel h2 {
+  margin: 0 0 14px;
+  font-size: 2rem;
+}
+
+.hub-intro-panel p {
+  margin: 0 0 12px;
+  line-height: 1.55;
+  color: #d7d7d7;
+}

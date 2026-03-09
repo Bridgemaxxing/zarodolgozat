@@ -140,3 +140,29 @@ video {
   transform: translate(-50%, -50%) scale(1.1);
   letter-spacing: 5px;
 }
+
+.classDescription {
+  font-size: 1.1rem;
+  line-height: 1.2;
+  background: rgba(0, 0, 0, 0.35);
+  padding: 8px 12px;
+  border-radius: 10px;
+}
+
+.detailsToggle {
+  background: rgba(20, 20, 20, 0.75);
+  color: #f3f3f3;
+  border: 1px solid rgba(255,255,255,0.2);
+  padding: 6px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.detailsPanel {
+  margin-top: 8px;
+  padding: 10px 12px;
+  background: rgba(0, 0, 0, 0.45);
+  border-radius: 10px;
+  text-align: left;
+}
