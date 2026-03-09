@@ -526,7 +526,7 @@ export default function Hub({ onGoAdventure, onStartQuestBattle }) {
         </div>
         
       )}
-      */}
+   
 
 <button
   style={{
@@ -558,6 +558,7 @@ export default function Hub({ onGoAdventure, onStartQuestBattle }) {
 >
   RESET HUB INTRO
 </button>
+   */}
     </div>
   );
 }
