@@ -47,6 +47,7 @@ import {
 
 const BASE_UI_SCALE = 0.8;
 
+
 const PET_UI = {
   wrapperStyle: {
     left: "20px",
@@ -296,7 +297,8 @@ const SMART_DRAW = {
   PLAY_ANIM_MS: 320,
   DRAW_ANIM_MS: 320,
 };
-
+// evasion chance
+const DEFAULT_EVASION_CHANCE = 0.70;
 // ===== ENEMY TURN TIMING (állítható delay-ek) =====
 // Enemy köre ennyi ms múlva indul a player akció után.
 const ENEMY_TURN_DELAY_MS = 850;
@@ -329,7 +331,7 @@ function buildCombatPoolFromPlayer(player, classKey) {
 
     const img = resolveCardImageFromAbility(ab);
 
-    cards.push({
+      cards.push({
       abilityId: ab.id,
       name: ab.name,
       type: ab.type,
@@ -345,11 +347,11 @@ function buildCombatPoolFromPlayer(player, classKey) {
       stunTurns: ab.stunTurns || 0,
       defenseTurns: ab.defenseTurns || 0,
       evasionTurns: ab.evasionTurns || 0,
+      evasionChance: ab.evasionChance ?? DEFAULT_EVASION_CHANCE,
       vulnerabilityDebuff: ab.vulnerabilityDebuff || null,
       bleed: ab.bleed || null,
       bleedStacks: ab.bleedStacks || 1,
       executeBelowPercent: ab.executeBelowPercent || null,
-
       petTauntTurns: ab.petTauntTurns || 0,
       petHeal: ab.petHeal || 0,
       petBiteBonus: ab.petBiteBonus || 0,
@@ -789,6 +791,9 @@ function skipTutorial() {
 
   const [pendingEnemies, setPendingEnemies] = useState([]); // chain battle queue
 
+
+  
+
   // ✅ battleOver ref
   const battleOverRef = useRef(false);
   useEffect(() => {
@@ -931,6 +936,21 @@ const setEnemyStunSync = (v) => {
   const [playerPoison, setPlayerPoison] = useState(null);
   const [enemyStunImmuneTurns, setEnemyStunImmuneTurns] = useState(0);
   const enemyStunImmuneTurnsRef = useRef(0);
+
+const [playerEvasionChance, setPlayerEvasionChance] = useState(DEFAULT_EVASION_CHANCE);
+
+const playerEvasionTurnsRef = useRef(0);
+useEffect(() => {
+  playerEvasionTurnsRef.current = playerEvasionTurns;
+}, [playerEvasionTurns]);
+
+const playerEvasionChanceRef = useRef(DEFAULT_EVASION_CHANCE);
+useEffect(() => {
+  playerEvasionChanceRef.current = playerEvasionChance;
+}, [playerEvasionChance]);
+
+
+ 
 
 const setEnemyStunImmuneTurnsSync = (v) => {
   enemyStunImmuneTurnsRef.current = v;
@@ -1282,13 +1302,11 @@ function finishEnemyTurnToPlayer() {
   }
 
   resolvePendingReplaces();
-  setDefending(false);
 
   if (classKey === "archer") {
     setPetTauntCd((prev) => Math.max(0, (prev || 0) - 1));
   }
 
-  // ✅ egyetlen központi stamina regen szabály
   setPlayerStamina((prev) => Math.min(PLAYER_MAX_STAMINA, prev + 1));
 
   setTurn("player");
@@ -1437,6 +1455,9 @@ if (remainingEnemies.length > 0) {
         setEnemyVulnerability(null);
         setEnemyBleed(null);
         setPlayerEvasionTurns(0);
+        setPlayerEvasionChance(DEFAULT_EVASION_CHANCE);
+        playerEvasionChanceRef.current = DEFAULT_EVASION_CHANCE;
+        playerEvasionTurnsRef.current = 0;
         setPlayerPoison(null);
 
         setEnemyGuardHitsSync(0);
@@ -1741,7 +1762,7 @@ function passTurn() {
 
   // ===== PLAY CARD =====
  function playCardAt(slotIndex) {
-  if (tutBlocking && tutStep !== 4) return; 
+  if (tutBlocking && tutStep !== 3) return; 
   const card = handRef.current?.[slotIndex];
   if (!card) return;
   if (card._played) return;
@@ -2065,7 +2086,32 @@ function passTurn() {
       }
     }
 
+    if (card.evasionTurns && card.evasionTurns > 0) {
+  const chance = Math.max(
+    0,
+    Math.min(1, card.evasionChance ?? DEFAULT_EVASION_CHANCE)
+  );
+
+  const nextTurns = Math.max(playerEvasionTurnsRef.current, card.evasionTurns);
+
+  setPlayerEvasionTurns(nextTurns);
+  playerEvasionTurnsRef.current = nextTurns;
+
+  setPlayerEvasionChance(chance);
+  playerEvasionChanceRef.current = chance;
+
+  pushLog(
+    t("combatLogEvasionActive", {
+      card: card.name,
+      turns: card.evasionTurns,
+      percent: Math.round(chance * 100),
+    })
+  );
+}
+
     if (card.type === "defend") {
+
+
       if (card.abilityId === "mage_mana_shield") {
         spawnAbilityEffect({ src: manaShieldFx, target: "player_shield", width: "1150px", height: "1000px" });
       }
@@ -2078,28 +2124,20 @@ function passTurn() {
         spawnAbilityEffect({ src: warriorParryFx, target: "player", width: "1200px", height: "1200px" });
       }
 
-      if (card.evasionTurns && card.evasionTurns > 0) {
-        setPlayerEvasionTurns((prev) => Math.max(prev, card.evasionTurns));
-        pushLog(
-                t("combatLogEvasionActive", {
-                  card: card.name,
-                  turns: card.evasionTurns,
-                })
-              );
-      }
+     if (card.defenseTurns && card.defenseTurns > 0) {
+  setDefending(card.defenseTurns);
 
-      if (card.defenseTurns && card.defenseTurns > 1) {
-        setDefending(card.defenseTurns);
-       pushLog(
-              t("combatLogDefendingActiveTurns", {
-                card: card.name,
-                turns: card.defenseTurns,
-              })
-            );
-      } else {
-        setDefending(1);
-        pushLog(t("combatLogDefendingActive"));
-      }
+  if (card.defenseTurns > 1) {
+    pushLog(
+      t("combatLogDefendingActiveTurns", {
+        card: card.name,
+        turns: card.defenseTurns,
+      })
+    );
+  } else {
+    pushLog(t("combatLogDefendingActive"));
+  }
+}
 
    if (card.stunTurns && card.stunTurns > 0) {
   debugStun("DEFEND STUN TRY", {
@@ -2112,7 +2150,12 @@ function passTurn() {
       cardName: card.name,
     });
 
-    pushLog(`${enemy.name} még ${enemyStunImmuneTurnsRef.current} körig nem stunolható!`);
+  pushLog(
+  t("combatLogEnemyStunImmune", {
+    enemy: enemy.name,
+    turns: enemyStunImmuneTurnsRef.current,
+  })
+);
   } else {
     debugStun("DEFEND STUN APPLIED", {
       cardName: card.name,
@@ -2374,48 +2417,78 @@ if (poisonNow && playerHPRef.current > 0) {
   });
 }
 
-      if (enemyPoison && enemyHP > 0) {
-        const poisonDmg = enemyPoison.damagePerTurn ?? 0;
-        const newHP = Math.max(0, enemyHP - poisonDmg);
+    if (enemyPoison && enemyHPRef.current > 0) {
+  const poisonDmg = enemyPoison.damagePerTurn ?? 0;
+  let poisonKilled = false;
 
-        if (poisonDmg > 0) {
-          setEnemyHP(newHP);
-          addHPPopup(-poisonDmg, "enemy");
-          pushLog(
-                  t("combatLogPoisonDamageEnemy", {
-                    dmg: poisonDmg,
-                    enemy: enemy.name,
-                    hp: newHP,
-                  })
-                );
-        }
+  setEnemyHP((prev) => {
+    const newHP = Math.max(0, prev - poisonDmg);
 
-        const remaining = (enemyPoison.remainingTurns ?? 1) - 1;
-        if (remaining <= 0 || newHP <= 0) setEnemyPoison(null);
-        else setEnemyPoison((prev) => (prev ? { ...prev, remainingTurns: remaining } : null));
+    if (poisonDmg > 0) {
+      addHPPopup(-poisonDmg, "enemy");
+      pushLog(
+        t("combatLogPoisonDamageEnemy", {
+          dmg: poisonDmg,
+          enemy: enemy.name,
+          hp: newHP,
+        })
+      );
+    }
 
-        if (newHP <= 0) { endBattle(); return; }
-      }
+    if (newHP <= 0) poisonKilled = true;
+    return newHP;
+  });
 
-      if (enemyBleed && enemyHP > 0) {
-        const bleedDmg = Math.max(1, Math.floor((enemy.maxHp * enemyBleed.percent) / 100));
-        const newHP = Math.max(0, enemyHP - bleedDmg);
+  const remaining = (enemyPoison.remainingTurns ?? 1) - 1;
+  if (remaining <= 0 || poisonKilled) {
+    setEnemyPoison(null);
+  } else {
+    setEnemyPoison((prev) =>
+      prev ? { ...prev, remainingTurns: remaining } : null
+    );
+  }
 
-        setEnemyHP(newHP);
-        addHPPopup(-bleedDmg, "enemy");
-        pushLog(
-                t("combatLogBleedDamageEnemy", {
-                  dmg: bleedDmg,
-                  percent: enemyBleed.percent,
-                })
-              );
+  if (poisonKilled) {
+    endBattle();
+    return;
+  }
+}
+if (enemyBleed && enemyHPRef.current > 0) {
+  const bleedDmg = Math.max(
+    1,
+    Math.floor((enemy.maxHp * enemyBleed.percent) / 100)
+  );
+  let bleedKilled = false;
 
-        const remaining = (enemyBleed.remainingTurns ?? 1) - 1;
-        if (remaining <= 0 || newHP <= 0) setEnemyBleed(null);
-        else setEnemyBleed((prev) => (prev ? { ...prev, remainingTurns: remaining } : null));
+  setEnemyHP((prev) => {
+    const newHP = Math.max(0, prev - bleedDmg);
 
-        if (newHP <= 0) { endBattle(); return; }
-      }
+    addHPPopup(-bleedDmg, "enemy");
+    pushLog(
+      t("combatLogBleedDamageEnemy", {
+        dmg: bleedDmg,
+        percent: enemyBleed.percent,
+      })
+    );
+
+    if (newHP <= 0) bleedKilled = true;
+    return newHP;
+  });
+
+  const remaining = (enemyBleed.remainingTurns ?? 1) - 1;
+  if (remaining <= 0 || bleedKilled) {
+    setEnemyBleed(null);
+  } else {
+    setEnemyBleed((prev) =>
+      prev ? { ...prev, remainingTurns: remaining } : null
+    );
+  }
+
+  if (bleedKilled) {
+    endBattle();
+    return;
+  }
+}
 
       // ===== Stun / evasion =====
 if (enemyStunRef.current > 0 && enemyHPRef.current > 0) {
@@ -2447,12 +2520,41 @@ if (enemyStunRef.current > 0 && enemyHPRef.current > 0) {
   finishEnemyTurnToPlayer();
   return;
 }
-      if (playerEvasionTurns > 0 && enemyHP > 0) {
-      pushLog(t("combatLogEvadedEnemyAttack", { enemy: enemy.name }));
-      setPlayerEvasionTurns((prev) => Math.max(0, prev - 1));
-      finishEnemyTurnToPlayer();
-      return;
-    }
+    if (playerEvasionTurnsRef.current > 0 && enemyHPRef.current > 0) {
+  const evadeChance = Math.max(
+    0,
+    Math.min(1, playerEvasionChanceRef.current ?? DEFAULT_EVASION_CHANCE)
+  );
+
+  const didEvade = Math.random() < evadeChance;
+
+  const nextTurns = Math.max(0, playerEvasionTurnsRef.current - 1);
+  playerEvasionTurnsRef.current = nextTurns;
+  setPlayerEvasionTurns(nextTurns);
+
+  if (nextTurns <= 0) {
+    playerEvasionChanceRef.current = DEFAULT_EVASION_CHANCE;
+    setPlayerEvasionChance(DEFAULT_EVASION_CHANCE);
+  }
+
+  if (didEvade) {
+    pushLog(
+      t("combatLogEvadedEnemyAttack", {
+        enemy: enemy.name,
+        percent: Math.round(evadeChance * 100),
+      })
+    );
+    finishEnemyTurnToPlayer();
+    return;
+  } else {
+    pushLog(
+      t("combatLogEvasionFailed", {
+        enemy: enemy.name,
+        percent: Math.round(evadeChance * 100),
+      })
+    );
+  }
+}
 
       // ✅ UTILITY FIX: ha ability használt, de nem fogyaszt kört, akkor folytatódik és jön a basic attack
       const abRes = tryEnemyAbilityAction();
@@ -2620,8 +2722,8 @@ async function handleContinue() {
  async function awardReward({ hpAfterBattle } = {}) {
   if (!victory || !player?.id) return { xpGain: 0, goldGain: 0 };
 
-  const { xpGain, goldGain  } = rollRewards();
-  
+  const xpGain = lastRewards?.xpGain ?? 0;
+  const goldGain = lastRewards?.goldGain ?? 0;
 
   try {
     await fetch("https://nodejs202.dszcbaross.edu.hu/api/combat/reward", {
@@ -2635,14 +2737,15 @@ async function handleContinue() {
       }),
     });
 
-    try { await refreshFullStats?.(player.id); } catch {}
+    try {
+      await refreshFullStats?.(player.id);
+    } catch {}
   } catch (err) {
     console.error("Reward save failed", err);
   }
 
   return { xpGain, goldGain };
 }
-  
 
 
   // =========================================================
@@ -2768,17 +2871,15 @@ if (!isLastWave) {
 
   // Backend reward (FULL HP mentés, mert hubba megyünk)
   if (player?.id) {
-    const { xpGain, goldGain } = rollRewards();
-    finalReward = { xpGain, goldGain };
-
+  finalReward = await awardReward({ hpAfterBattle: fullMax });
     try {
       const res = await fetch("https://nodejs202.dszcbaross.edu.hu/api/combat/reward", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           playerId: player.id,
-          xpGain,
-          goldGain,
+          xpGain: finalReward.xpGain,
+          goldGain: finalReward.goldGain,
           hpAfterBattle: fullMax,
         }),
       });
@@ -2803,6 +2904,10 @@ if (!isLastWave) {
   setPlayerHP(fullMax);
   playerHPRef.current = fullMax;
   
+if (player?.id && setPlayer) {
+  setPlayer((prev) => ({ ...(prev || {}), hp: fullMax }));
+}
+
 emitEnd({
   victory: true,
   hpAfter: fullMax,
@@ -3232,28 +3337,6 @@ return (
   </div>
 )}
 
-
-
-          {/* ARCHER PET BIG FRAME */}
-          {classKey === "archer" && petMaxHP > 0 && (
-            <div className="absolute z-[80] pointer-events-none" style={{ ...PET_UI.wrapperStyle, width: `${PET_SIZE}px` }}>
-              <div className="relative" style={{ width: `${PET_SIZE}px` }}>
-                {hpPopups.filter((p) => p.target === "pet").map((p) => (
-                  <HPPopup key={p.id} value={p.value} isCrit={p.isCrit} variant="pet" onDone={() => setHPPopups((prev) => prev.filter((pp) => pp.id !== p.id))} />
-                ))}
-                <div className="rounded-xl bg-black/50" style={{ width: `${PET_SIZE}px`, height: `${PET_SIZE}px`, overflow: "hidden", opacity: petHP <= 0 ? 0.45 : 1, boxShadow: "0 0 14px rgba(0,0,0,0.7)" }}>
-                  <img src="/ui/player/pet.png" alt="pet" className="w-full h-full object-cover" />
-                </div>
-                <div className="relative mt-2 rounded-full overflow-hidden" style={{ height: "14px", width: `${PET_SIZE}px`, background: "rgba(0,0,0,0.6)" }}>
-                  <div style={{ height: "100%", width: `${petMaxHP > 0 ? (petHP / petMaxHP) * 100 : 0}%`, background: "red", transition: "width 200ms" }} />
-                  <div className="absolute inset-0 flex items-center justify-center font-mono text-xs" style={{ color: "white", textShadow: "1px 1px 3px rgba(0,0,0,0.9)", pointerEvents: "none" }}>
-                    {petHP}/{petMaxHP}
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
           {/* PLAYER FRAME */}
           <div   ref={(el) => {
             playerAnchorRef.current = el;
@@ -3271,21 +3354,7 @@ return (
                 <HPPopup key={p.id} value={p.value} isCrit={p.isCrit} variant={p.variant || "default"} onDone={() => setHPPopups((prev) => prev.filter((pp) => pp.id !== p.id))} />
               ))}
 
-              {/* ARCHER MINI PET BAR */}
-              {classKey === "archer" && petMaxHP > 0 && (
-                <div className="absolute -right-28 bottom-2 w-24" style={{ zIndex: 20 }}>
-                  <div className="relative rounded-lg overflow-hidden border border-black/50 bg-black/40">
-                    <img src={"/ui/player/player.png"} alt="pet" className="w-full h-16 object-cover opacity-95" />
-                    <div className="px-1 pb-1">
-                      <div className="text-[10px] text-gray-100 font-mono">Pet {petHP}/{petMaxHP} {petTauntTurns > 0 ? ` • TAUNT ${petTauntTurns}` : ""}</div>
-                      <div className="h-2 w-full bg-black/60 rounded overflow-hidden border border-white/10">
-                        <div className="h-full bg-emerald-400 transition-all duration-200" style={{ width: `${petMaxHP > 0 ? (petHP / petMaxHP) * 100 : 0}%` }} />
-                      </div>
-                    </div>
-                    {petHP <= 0 && <div className="absolute inset-0 bg-black/60 flex items-center justify-center text-[10px]">{t("dead")}</div>}
-                  </div>
-                </div>
-              )}
+              
             </div>
           </div>
 

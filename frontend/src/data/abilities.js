@@ -390,6 +390,7 @@ export const ALL_ABILITIES = [
   image: "/cards/epic/archer_camouflage.png",
 
   evasionTurns: 2, // ✅ ÚJ: 2 enemy attack elől kitérsz
+  evasionChance: 0.7,
 },
   {
     id: "archer_healing_herbs",
