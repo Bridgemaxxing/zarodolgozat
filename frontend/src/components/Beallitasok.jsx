@@ -1,6 +1,6 @@
-// frontend/src/components/Beallitasok.jsx
 import React, { useEffect, useMemo, useState } from "react";
 import { usePlayer } from "../context/PlayerContext.jsx";
+import { useLanguage } from "./LanguageContext.jsx";
 import "./Beallitasok.css";
 
 const CLASS_CONFIG = {
@@ -9,42 +9,11 @@ const CLASS_CONFIG = {
   8: { key: "archer", displayName: "Íjász", sprite: "/ui/player/ijasz.png" },
 };
 
-const BASE_TABS = [
-  { key: "hang", label: "Hang" },
-  { key: "nyelv", label: "Nyelv" },
-  { key: "profil", label: "Profil" },
-];
-
 const SKIP_LS_KEY = "skipLoadingScreen";
-
-/* -------------------------
-   Csak INT input (kényelmes, nem ugrál)
-   - engedi: "", "-" és számok
-   - NEM type=number (az szokott unfocus/caret bugolni)
-   ------------------------- */
-function IntInput({ value, onChange, placeholder, className, style }) {
-  return (
-    <input
-      type="text"
-      inputMode="numeric"
-      pattern="-?[0-9]*"
-      value={value}
-      placeholder={placeholder}
-      className={className}
-      style={style}
-      onChange={(e) => {
-        const v = e.target.value;
-        if (/^-?\d*$/.test(v)) onChange(v);
-      }}
-      onKeyDown={(e) => {
-        if (e.key === "Enter") e.preventDefault();
-      }}
-    />
-  );
-}
 
 export default function BeallitasokModal({ onClose }) {
   const { player } = usePlayer() || {};
+  const { language, setLanguage, t } = useLanguage();
 
   const [activeTab, setActiveTab] = useState("hang");
   const [isClosing, setIsClosing] = useState(false);
@@ -57,12 +26,9 @@ export default function BeallitasokModal({ onClose }) {
   const [sfxVol, setSfxVol] = useState(80);
   const [masterVol, setMasterVol] = useState(90);
 
-  // Nyelv
-  const [lang, setLang] = useState("hu"); // hu | en
-
   // Profil edit
   const [editOpen, setEditOpen] = useState(false);
-  const [editField, setEditField] = useState("username"); // username | email
+  const [editField, setEditField] = useState("username");
   const [editValue, setEditValue] = useState("");
 
   const profileSprite = useMemo(() => {
@@ -74,15 +40,21 @@ export default function BeallitasokModal({ onClose }) {
   const email = player?.email || player?.mail || "";
   const maskedEmail = useMemo(() => maskEmail(email), [email]);
 
-  // ✅ admin flag
   const isAdmin = Number(player?.admin) === 1;
 
-  // ✅ tabok: admin csak adminnak
   const TABS = useMemo(() => {
-    const t = [...BASE_TABS];
-    if (isAdmin) t.push({ key: "admin", label: "Admin mód" });
-    return t;
-  }, [isAdmin]);
+    const tabs = [
+      { key: "hang", label: t("sound") },
+      { key: "nyelv", label: t("language") },
+      { key: "profil", label: t("profile") },
+    ];
+
+    if (isAdmin) {
+      tabs.push({ key: "admin", label: t("adminMode") });
+    }
+
+    return tabs;
+  }, [isAdmin, t]);
 
   useEffect(() => {
     if (!isAdmin && activeTab === "admin") setActiveTab("hang");
@@ -136,21 +108,21 @@ export default function BeallitasokModal({ onClose }) {
           </button>
 
           <div className="beallitasok-tabs" role="tablist" aria-label="Beállítások fülek">
-            {TABS.map((t) => (
-              <button
-                key={t.key}
-                type="button"
-                role="tab"
-                aria-selected={activeTab === t.key}
-                className={`beallitasok-tab ${activeTab === t.key ? "active" : ""}`}
-                onClick={() => {
-                  setActiveTab(t.key);
-                  closeEdit();
-                }}
-              >
-                {t.label}
-              </button>
-            ))}
+          {TABS.map((tab) => (
+            <button
+              key={tab.key}
+              type="button"
+              role="tab"
+              aria-selected={activeTab === tab.key}
+              className={`beallitasok-tab ${activeTab === tab.key ? "active" : ""}`}
+              onClick={() => {
+                setActiveTab(tab.key);
+                closeEdit();
+              }}
+            >
+              {tab.label}
+            </button>
+          ))}
           </div>
 
           <div className="beallitasok-panelWrap">
@@ -158,7 +130,7 @@ export default function BeallitasokModal({ onClose }) {
               {/* HANG */}
               {activeTab === "hang" && (
                 <div className="beallitasok-panel invStatsBorder">
-                  <div className="beallitasok-panel-title invEquipmentText">HANG</div>
+                  <div className="beallitasok-panel-title invEquipmentText">{t("sound").toUpperCase()}</div>
 
                   <AudioRow label="Zene" enabled={musicOn} onToggle={() => setMusicOn((v) => !v)} value={musicVol} onChange={setMusicVol} />
                   <AudioRow label="Effektek" enabled={sfxOn} onToggle={() => setSfxOn((v) => !v)} value={sfxVol} onChange={setSfxVol} />
@@ -171,37 +143,36 @@ export default function BeallitasokModal({ onClose }) {
               {/* NYELV */}
               {activeTab === "nyelv" && (
                 <div className="beallitasok-panel invStatsBorder">
-                  <div className="beallitasok-panel-title invEquipmentText">NYELV</div>
+                 <div className="beallitasok-panel-title invEquipmentText">{t("language").toUpperCase()}</div>
 
                   <div className="beallitasok-langWrapBig">
-                    <button
-                      type="button"
-                      className={`beallitasok-langBtnBig invInvEquipBtn ${lang === "hu" ? "selected" : ""}`}
-                      onClick={() => setLang("hu")}
-                    >
-                      <span className="pixel-flag-big flag-hu" aria-hidden="true" />
-                      <span className="beallitasok-langTextBig">MAGYAR</span>
-                    </button>
+                  <button
+                  type="button"
+                  className={`beallitasok-langBtnBig invInvEquipBtn ${language === "hu" ? "selected" : ""}`}
+                  onClick={() => setLanguage("hu")}
+                >
+                  <span className="pixel-flag-big flag-hu" aria-hidden="true" />
+                  <span className="beallitasok-langTextBig">{t("hungarian")}</span>
+                </button>
 
-                    <button
-                      type="button"
-                      className={`beallitasok-langBtnBig invInvEquipBtn ${lang === "en" ? "selected" : ""}`}
-                      onClick={() => setLang("en")}
-                    >
-                      <span className="pixel-flag-big flag-uk" aria-hidden="true" />
-                      <span className="beallitasok-langTextBig">ENGLISH</span>
-                    </button>
+                <button
+                  type="button"
+                  className={`beallitasok-langBtnBig invInvEquipBtn ${language === "en" ? "selected" : ""}`}
+                  onClick={() => setLanguage("en")}
+                >
+                  <span className="pixel-flag-big flag-uk" aria-hidden="true" />
+                  <span className="beallitasok-langTextBig">{t("english")}</span>
+                </button>
                   </div>
 
-                  <div className="beallitasok-note invInvValassz">Placeholder: később tényleges nyelvváltás + mentés.</div>
+                  <div className="beallitasok-note invInvValassz">{t("languageSaved")}</div>
                 </div>
               )}
 
               {/* PROFIL */}
               {activeTab === "profil" && (
                 <div className="beallitasok-panel invStatsBorder">
-                  <div className="beallitasok-panel-title invEquipmentText beallitasok-titleBig">PROFIL</div>
-
+                  <div className="beallitasok-panel-title invEquipmentText beallitasok-titleBig">{t("profile").toUpperCase()}</div>
                   <div className="beallitasok-profileCenter">
                     <div className="beallitasok-avatarOutline">
                       {profileSprite ? (
@@ -256,7 +227,7 @@ export default function BeallitasokModal({ onClose }) {
               {/* ADMIN */}
               {activeTab === "admin" && isAdmin && (
                 <div className="beallitasok-panel invStatsBorder">
-                  <div className="beallitasok-panel-title invEquipmentText">ADMIN MÓD</div>
+                  <div className="beallitasok-panel-title invEquipmentText">{t("adminMode").toUpperCase()}</div>
                   <AdminPanel adminId={player?.id} targetPlayerId={player?.id} />
                 </div>
               )}

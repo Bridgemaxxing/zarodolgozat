@@ -1,6 +1,7 @@
 
 import React, { useState, useMemo, useEffect, useRef } from "react";
 import TutorialOverlay from "./TutorialOverlay.jsx";
+import { useLanguage } from "./LanguageContext.jsx";
 import { usePlayer } from "../context/PlayerContext.jsx";
 import {
   getClassKeyFromId,
@@ -73,6 +74,8 @@ export default function Inv({ onClose }) {
     itemBonuses,
     effectiveStats,
   } = usePlayer() || {};
+
+  const { t } = useLanguage();
   /* ==============================
      MODAL STATE
      ============================== */
@@ -98,12 +101,12 @@ export default function Inv({ onClose }) {
     setHouseStep(done ? 0 : 1);
   }, [player?.id]);
 
-  const houseSteps = {
-    1: { ref: hzInvRef, text: "Kattints a Leltárra (felszerelés kezelése)." },
-    2: { ref: hzDeckRef, text: "Kattints a Szekrényre (deck szerkesztés)." },
-    3: { ref: hzStatsRef, text: "Kattints a Statisztikákra (stat pontok)." },
-    4: { ref: hzExitRef, text: "Kattints a Kilépésre (vissza a Hubba)." },
-  };
+ const houseSteps = {
+  1: { ref: hzInvRef, text: t("houseTutInventory") },
+  2: { ref: hzDeckRef, text: t("houseTutDeck") },
+  3: { ref: hzStatsRef, text: t("houseTutStats") },
+  4: { ref: hzExitRef, text: t("houseTutExit") },
+};
 
   const houseTutActive = houseStep > 0 && !anyModalOpen;
 
@@ -383,14 +386,15 @@ function handleSaveDeck() {
   const stats = useMemo(() => {
     if (!player) {
       return [
-        { label: "Level", value: "-" },
-        { label: "HP", value: "-" },
-        { label: "Strength", value: "-" },
-        { label: "Intellect", value: "-" },
-        { label: "Defense", value: "-" },
-        { label: "Gold", value: "-" },
+        { label: t("level"), value: "-" },
+        { label: t("hp"), value: "-" },
+        { label: t("strength"), value: "-" },
+        { label: t("intellect"), value: "-" },
+        { label: t("defense"), value: "-" },
+        { label: t("gold"), value: "-" },
       ];
     }
+
     const finalStr = effectiveStats?.strength ?? (player.strength ?? 0);
     const finalInt = effectiveStats?.intellect ?? (player.intellect ?? 0);
     const finalDef = effectiveStats?.defense ?? (player.defense ?? 0);
@@ -398,15 +402,16 @@ function handleSaveDeck() {
     const finalMaxHp = effectiveStats?.max_hp ?? (player.max_hp ?? 0);
     const hpBonus = itemBonuses?.hp ?? 0;
     const hpText = `${finalHp} / ${finalMaxHp}`;
+
     return [
-      { label: "Szint", value: player.level ?? 1 },
-      { label: "Életerő", value: hpBonus ? `${hpText} (+${hpBonus})` : hpText },
-      { label: "Erő", value: formatWithBonus(finalStr, itemBonuses?.strength ?? 0) },
-      { label: "Intelligencia", value: formatWithBonus(finalInt, itemBonuses?.intellect ?? 0) },
-      { label: "Védelem", value: formatWithBonus(finalDef, itemBonuses?.defense ?? 0) },
-      { label: "Arany", value: player.gold ?? 0 },
+      { label: t("level"), value: player.level ?? 1 },
+      { label: t("hp"), value: hpBonus ? `${hpText} (+${hpBonus})` : hpText },
+      { label: t("strength"), value: formatWithBonus(finalStr, itemBonuses?.strength ?? 0) },
+      { label: t("intellect"), value: formatWithBonus(finalInt, itemBonuses?.intellect ?? 0) },
+      { label: t("defense"), value: formatWithBonus(finalDef, itemBonuses?.defense ?? 0) },
+      { label: t("gold"), value: player.gold ?? 0 },
     ];
-  }, [player, effectiveStats, itemBonuses]);
+  }, [player, effectiveStats, itemBonuses, t]);
   /* ==============================
      RENDER
      ============================== */
@@ -426,7 +431,7 @@ function handleSaveDeck() {
           position: "relative",
         }}
       >
-        <h2 className="text-center mb-2 text-sm text-white">OTTHON</h2>
+        <h2 className="text-center mb-2 text-sm text-white">{t("homeUpper")}</h2>
         {showStats && <StatModal onClose={() => setShowStats(false)} />}
         {/* INVENTORY */}
         {showInventory && (
@@ -444,7 +449,7 @@ function handleSaveDeck() {
               </button>
               <div className="h-full grid grid-cols-12 gap-6 min-h-0">
                 <div className="col-span-2 flex flex-col gap-3 min-h-0">
-                  <div className="invEquipmentText">Felszerelés</div>
+                  <div className="invEquipmentText">{t("equipment")}</div>
                   {EQUIP_SLOTS.map((slot) => {
                     const equipped = equippedBySlot[slot.key];
                     const ui = equipped ? rarityUi(equipped.rarity) : rarityUi("common");
@@ -460,12 +465,12 @@ function handleSaveDeck() {
                           equipped ? "invEquipedItemsEquipped" : "invEquipedItemsUnEquipped",
                           equipped ? ui.border : "border-neutral-700",
                         ].join(" ")}
-                        title={equipped ? "Kattints a részletekhez" : "Üres slot"}
+                        title={equipped ? t("clickForDetails") : t("emptySlot")}
                       >
                         <div className="invEquipedItemType">{slot.label}</div>
 
                         <div className="invEquipedItemName">
-                          {equipped ? equipped.name : "Üres"}
+                          {equipped ? equipped.name : t("empty")}
                         </div>
 
                         <div
@@ -490,13 +495,13 @@ function handleSaveDeck() {
                         className="w-full h-full object-cover"
                       />
                     ) : (
-                      <div className="text-gray-400">(Nincs kép)</div>
+                      <div className="text-gray-400">{t("noImage")}</div>
                     )}
                   </div>
                 </div>
                 <div className="col-span-4 flex flex-col gap-4 min-h-0">
                   <div className="invStatsBorder p-4 ">
-                    <div className="invStatsText">Stats</div>
+                    <div className="invStatsText">{t("stats")}</div>
                     <div className="invStats space-y-2">
                       {stats.map((s) => (
                         <div
@@ -510,13 +515,13 @@ function handleSaveDeck() {
                     </div>
                   </div>
                   <div className="invInvBorder p-4 flex-1 min-h-0 flex flex-col">
-                    <div className="invInvText">Inventory</div>
+                    <div className="invInvText">{t("inventory")}</div>
                     <div className="invItemsBorder overflow-y-auto">
                       <div className="invInvGridItems grid grid-cols-3 gap-4">
                         {inventoryItems.length === 0 && (
-                          <div className="invInvGridItemsNull text-neutral-500 col-span-4 text-center mt-10">
-                            Az inventory üres
-                          </div>
+                        <div className="invInvGridItemsNull text-neutral-500 col-span-4 text-center mt-10">
+                        {t("inventoryEmpty")}
+                      </div>
                         )}
                         {inventoryItems.map((item) => {
                           const isSelected = selectedItem?.owned_id === item.owned_id;
@@ -565,7 +570,7 @@ function handleSaveDeck() {
                     {selectedItem ? (
                       <div className="flex flex-col gap-3">
                         <div>
-                          <div className="invInvSelectedText">Selected</div>
+                          <div className="invInvSelectedText">{t("selected")}</div>
                           <div className="invInvSelectedItem">{selectedItem.name}</div>
                           <div className="invInvSelectedItemInfo">
                             {selectedItem.type} • {selectedItem.rarity}
@@ -575,44 +580,44 @@ function handleSaveDeck() {
                           </div>
                         </div>
                         <div className="invInvSelectedItemStat space-y-1">
-                          {formatBonusLine("Erő", selectedItem.bonus_strength)}
-                          {formatBonusLine("intelligencia", selectedItem.bonus_intellect)}
-                          {formatBonusLine("Védelem", selectedItem.bonus_defense)}
-                          {formatBonusLine("Életerő", selectedItem.bonus_hp)}
+                          {formatBonusLine(t("strength"), selectedItem.bonus_strength)}
+                          {formatBonusLine(t("intellect"), selectedItem.bonus_intellect)}
+                          {formatBonusLine(t("defense"), selectedItem.bonus_defense)}
+                          {formatBonusLine(t("hp"), selectedItem.bonus_hp)}
                         </div>
 <div className="flex gap-2">
-  {!selectedItem.is_equipped ? (
-    (selectedItem.type || "").toLowerCase() === "accessory" ? (
-      <>
-        <button
-          className="invInvEquipBtn flex-1 py-2"
-          onClick={() => equipItem(selectedItem.owned_id, "accessory1")}
-        >
-          Felvétel (1)
-        </button>
-        <button
-          className="invInvEquipBtn flex-1 py-2"
-          onClick={() => equipItem(selectedItem.owned_id, "accessory2")}
-        >
-          Felvétel (2)
-        </button>
-      </>
-    ) : (
+ {!selectedItem.is_equipped ? (
+  (selectedItem.type || "").toLowerCase() === "accessory" ? (
+    <>
       <button
         className="invInvEquipBtn flex-1 py-2"
-        onClick={() => equipItem(selectedItem.owned_id)}
+        onClick={() => equipItem(selectedItem.owned_id, "accessory1")}
       >
-        Felvétel
+        {t("equip")} (1)
       </button>
-    )
+      <button
+        className="invInvEquipBtn flex-1 py-2"
+        onClick={() => equipItem(selectedItem.owned_id, "accessory2")}
+      >
+        {t("equip")} (2)
+      </button>
+    </>
   ) : (
     <button
-      className="invInvUnEquipBtn flex-1 py-2"
-      onClick={() => unequipItem(selectedItem.owned_id)}
+      className="invInvEquipBtn flex-1 py-2"
+      onClick={() => equipItem(selectedItem.owned_id)}
     >
-      Levétel
+      {t("equip")}
     </button>
-  )}
+  )
+) : (
+  <button
+    className="invInvUnEquipBtn flex-1 py-2"
+    onClick={() => unequipItem(selectedItem.owned_id)}
+  >
+    {t("unequip")}
+  </button>
+)}
   <button
     className="invInvItemClear px-4 py-2"
     onClick={() => setSelectedItem(null)}
@@ -628,7 +633,7 @@ function handleSaveDeck() {
                         )}
                       </div>
                     ) : (
-                      <div className="invInvValassz text-center">Válassz ki egy tárgyat</div>
+                      <div className="invInvValassz text-center">{t("selectItem")}</div>
                     )}
                   </div>
                 </div>
@@ -659,14 +664,16 @@ function handleSaveDeck() {
     <div className="relative text-white flex flex-col items-center w-full max-w-[1000px]">
       {/* HEADER */}
       <div className="w-full max-w-[850px] flex justify-between items-end mb-2 px-6 book-text">
-        <h2 className="text-4xl tracking-tight text-amber-50 drop-shadow-md uppercase">
-          {classKey} Deck
-        </h2>
-        <div className="text-xl text-red-500">
-          Capacity: <span className={tempDeck.length > MAX_DECK_SIZE ? 'text-red-500' : 'text-white'}>
-            {tempDeck.length} / {MAX_DECK_SIZE}
-          </span>
-        </div>
+        
+                <h2 className="text-4xl tracking-tight text-amber-50 drop-shadow-md uppercase">
+                {classKey} {t("deck")}
+              </h2>
+              {t("deckNotSavedYet")}
+              <div className="text-xl text-red-500">
+                {t("capacity")}: <span className={tempDeck.length > MAX_DECK_SIZE ? "text-red-500" : "text-white"}>
+                  {tempDeck.length} / {MAX_DECK_SIZE}
+                </span>
+              </div>
       </div>
       {/* BOOK CONTAINER */}
       <div className="relative w-[75vw] max-w-[900px] aspect-[870/620] flex items-center justify-center">
@@ -688,8 +695,8 @@ function handleSaveDeck() {
         >
           {/* BAL OLDAL: ELÉRHETŐ */}
           <div className="flex-1 flex flex-col min-w-0">
-            <div className="book-text text-xl text-[#2a2218] border-b border-[#2a2218]/30 mb-3 font-bold uppercase text-center">
-              Elérhető képességek
+           <div className="book-text text-xl text-[#2a2218] border-b border-[#2a2218]/30 mb-3 font-bold uppercase text-center">
+              {t("availableAbilities")}
             </div>
             <div className="flex-1 overflow-y-auto pr-1 pixel-scroll pointer-events-auto">
               <div className="grid grid-cols-3 gap-2">
@@ -719,13 +726,15 @@ function handleSaveDeck() {
           </div>
           {/* JOBB OLDAL: PAKLI */}
           <div className="flex-1 flex flex-col min-w-0">
-            <div className="book-text text-xl text-[#2a2218] border-b border-[#2a2218]/30 mb-3 font-bold uppercase text-center">
-              Aktív Deck
-            </div>
+          <div className="book-text text-xl text-[#2a2218] border-b border-[#2a2218]/30 mb-3 font-bold uppercase text-center">
+            {t("activeDeck")}
+          </div>
             <div className="flex-1 overflow-y-auto pr-1 pixel-scroll pointer-events-auto">
               {uniqueDeckIds.length === 0 ? (
                 <div className="h-full flex items-center justify-center opacity-40">
-                  <div className="book-text text-lg text-[#2a2218] italic underline decoration-dotted">Empty Deck</div>
+                 <div className="book-text text-lg text-[#2a2218] italic underline decoration-dotted">
+                  {t("emptyDeck")}
+                </div>
                 </div>
               ) : (
                 <div className="grid grid-cols-3 gap-2">
@@ -764,18 +773,18 @@ function handleSaveDeck() {
       </div>
       {/* CONTROLS */}
       <div className="mt-4 flex gap-6 book-text">
-        <button
-          className="px-6 py-2 invInvEquipBtn"
-          onClick={() => setShowDeckEditor(false)}
-        >
-          MÉGSE
-        </button>
-        <button
-          className="invInvEquipBtn px-10 py-2 "
-          onClick={handleSaveDeck}
-        >
-          DECK MENTÉS
-        </button>
+       <button
+        className="px-6 py-2 invInvEquipBtn"
+        onClick={() => setShowDeckEditor(false)}
+      >
+        {t("cancelUpper")}
+      </button>
+      <button
+        className="invInvEquipBtn px-10 py-2 "
+        onClick={handleSaveDeck}
+      >
+        {t("saveDeck")}
+      </button>
       </div>
     </div>
   </div>
@@ -798,8 +807,7 @@ function handleSaveDeck() {
     handleClose();
   }}
 >
-  <span className="zone-label">Kilépés a házból</span>
-
+      <span className="zone-label">{t("exitHouse")}</span>
   
 </div>
 <div
@@ -817,7 +825,7 @@ function handleSaveDeck() {
     setShowDeckEditor(true);
   }}
 >
-  <span className="zone-label">Varázskönyv</span>
+  <span className="zone-label">{t("spellbook")}</span>
 
   
 </div>
@@ -837,7 +845,7 @@ function handleSaveDeck() {
     setShowInventory(true);
   }}
 >
-  <span className="zone-label">Leltár</span>
+  <span className="zone-label">{t("inventoryLabel")}</span>
 
  
 </div>
@@ -857,7 +865,7 @@ function handleSaveDeck() {
     setShowStats(true);
   }}
 >
-  <span className="zone-label">Statisztikák</span>
+  <span className="zone-label">{t("statistics")}</span>
 
   
 </div>

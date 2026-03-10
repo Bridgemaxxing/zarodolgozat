@@ -1,10 +1,12 @@
-import React, { useState, useRef, useEffect } from "react";
-import { DEFAULT_CLASSES } from "../data/classes.js";
+import React, { useState, useRef, useEffect, useMemo } from "react";
 import { usePlayer } from "../context/PlayerContext.jsx";
+import { useLanguage } from "./LanguageContext.jsx";
 import "./ClassSelect.css";
 
 export default function ClassSelect({ onNext }) {
   const { player, setPlayer } = usePlayer();
+  const { t } = useLanguage();
+
   const [classData, setClassData] = useState([]);
   const [selected, setSelected] = useState(null);
   const [openDetails, setOpenDetails] = useState(null);
@@ -16,32 +18,38 @@ export default function ClassSelect({ onNext }) {
         const data = await res.json();
         setClassData(data);
       } catch (err) {
-        console.error("Nem sikerült betölteni a kasztokat:", err);
+        console.error(t("classLoadErrorConsole"), err);
       }
     }
     loadClasses();
-  }, []);
+  }, [t]);
 
- const classDetails = {
-  6: {
-    short: "Masszív közelharcos, aki többféle irányba is építhető: lehet biztonságos bruiser, agresszív sebző vagy kitartó túlélő.",
-    role: "Sokoldalú frontline",
-    strength: "Rugalmas buildlehetőségek, stabil jelenlét és jó alkalmazkodás különböző helyzetekhez.",
-    weakness: "Rossz döntésekkel könnyen nyomás alá kerülhet.",
-  },
-  7: {
-    short: "Pusztító varázshasználó, aki nagy sebzéssel rendelkezik de kevés hibát engedhet meg magának.",
-    role: "Burst / control mágus",
-    strength: "Magas sebzés, erős spellhatások és veszélyes kombók, amelyek gyorsan eldönthetnek egy harcot.",
-    weakness: "Törékenyebb",
-  },
-  8: {
-    short: "Stabil távolsági sebző, aki folyamatos nyomás alatt tartja az ellenfelet, miközben a petje sok beérkező sebzést felfog helyette.",
-    role: "Stabil ranged DPS",
-    strength: "Megbízható, folyamatos sebzés és nagyobb biztonság a pet támogatása miatt.",
-    weakness: "Ha a pet kiesik vagy nem tudja megtartani a nyomást, sokkal sebezhetőbbé válik.",
-  },
-};
+  const classDetails = useMemo(
+    () => ({
+      6: {
+        name: t("warriorName"),
+        short: t("warriorShort"),
+        role: t("warriorRole"),
+        strength: t("warriorStrength"),
+        weakness: t("warriorWeakness"),
+      },
+      7: {
+        name: t("mageName"),
+        short: t("mageShort"),
+        role: t("mageRole"),
+        strength: t("mageStrength"),
+        weakness: t("mageWeakness"),
+      },
+      8: {
+        name: t("archerName"),
+        short: t("archerShort"),
+        role: t("archerRole"),
+        strength: t("archerStrength"),
+        weakness: t("archerWeakness"),
+      },
+    }),
+    [t]
+  );
 
   const videoSources = [
     "/video/classharcos.mp4",
@@ -71,9 +79,9 @@ export default function ClassSelect({ onNext }) {
   }
 
   async function create() {
-    if (!selected) return alert("Válassz egy hőst!");
+    if (!selected) return alert(t("chooseHeroAlert"));
     if (!player || !player.username) {
-      return alert("Hiba: nem vagy bejelentkezve.");
+      return alert(t("notLoggedInError"));
     }
 
     try {
@@ -86,14 +94,14 @@ export default function ClassSelect({ onNext }) {
       const data = await res.json();
       if (!res.ok) {
         console.error("set-class failed:", data);
-        return alert(data.error || "Nem sikerült menteni a kasztot!");
+        return alert(data.error || t("saveClassError"));
       }
 
       setPlayer({ ...player, class_id: selected });
       onNext();
     } catch (e) {
       console.error("set-class error:", e);
-      alert("Szerver hiba történt!");
+      alert(t("serverError"));
     }
   }
 
@@ -102,7 +110,7 @@ export default function ClassSelect({ onNext }) {
       <div className="absolute inset-0 bg-black/50"></div>
 
       <h2 className="absolute top-5 left-1/2 -translate-x-1/2 text-4xl font-bold text-white select-none pixelosvenyvalaszt">
-        Válassz egy hőst
+        {t("chooseHeroTitle")}
       </h2>
 
       <div className="absolute inset-0 flex">
@@ -129,12 +137,12 @@ export default function ClassSelect({ onNext }) {
             ></div>
 
             <span className="classname absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-3xl select-none pixelfont transition-all duration-300">
-              {cls.name}
+              {classDetails[cls.id]?.name || cls.name}
             </span>
 
             <div className="classStats absolute top-10 left-1/2 -translate-x-1/2 w-[80%] text-center text-gray-200 font-[Jersey 10] text-base drop-shadow-lg">
               <div className="classDescription mb-2">
-                {classDetails[cls.id]?.short || "Ismeretlen kaszt."}
+                {classDetails[cls.id]?.short || t("unknownClass")}
               </div>
 
               <button
@@ -145,26 +153,41 @@ export default function ClassSelect({ onNext }) {
                   setOpenDetails(openDetails === cls.id ? null : cls.id);
                 }}
               >
-                {openDetails === cls.id ? "Részletek ▲" : "Részletek ▼"}
+                {openDetails === cls.id ? t("detailsUp") : t("detailsDown")}
               </button>
 
+            
               {openDetails === cls.id && (
-                <div className="detailsPanel mt-2">
-                  <div><strong>Szerep:</strong> {classDetails[cls.id]?.role}</div>
-                  <div><strong>Erősség:</strong> {classDetails[cls.id]?.strength}</div>
-                  <div><strong>Gyengeség:</strong> {classDetails[cls.id]?.weakness}</div>
-                </div>
-              )}
+          <div className="detailsPanel mt-2">
+            <div>
+              <strong>{t("roleLabel")}:</strong> {classDetails[cls.id]?.role}
+            </div>
+            <div>
+              <strong>{t("strengthLabel")}:</strong> {classDetails[cls.id]?.strength}
+            </div>
+            <div>
+              <strong>{t("weaknessLabel")}:</strong> {classDetails[cls.id]?.weakness}
+            </div>
+          </div>
+        )}
+        {selected === cls.id && (
+        <button
+          type="button"
+          className="buttonClass createButton classCreateButton"
+          onClick={(e) => {
+            e.stopPropagation();
+            create();
+          }}
+        >
+          {t("createButton")}
+        </button>
+      )}
             </div>
           </div>
         ))}
       </div>
 
-      {selected && (
-        <button onClick={create} className="buttonClass createButton">
-          Létrehozás
-        </button>
-      )}
+     
     </div>
   );
 }

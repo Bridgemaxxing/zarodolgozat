@@ -1,5 +1,6 @@
 // frontend/src/components/BlacksmithModal.jsx
 import React, { useEffect, useMemo, useState } from "react";
+import { useLanguage } from "./LanguageContext.jsx";
 import "./KovacsModal.css";
 
 function num(v, fallback = 0) {
@@ -7,8 +8,6 @@ function num(v, fallback = 0) {
   return Number.isFinite(n) ? n : fallback;
 }
 
-// Kezeli mindkét elnevezést:
-// bonus_defense / defense_bonus stb.
 function getBonus(item, key) {
   const a = num(item?.[`bonus_${key}`], null);
   if (a !== null) return a;
@@ -24,7 +23,6 @@ function getDmg(item) {
   };
 }
 
-// 🔧 Upgrade preview (ez CSAK UI preview, a backend intézi a valódi stat mentést)
 function previewUpgraded(item) {
   if (!item) return null;
 
@@ -38,16 +36,10 @@ function previewUpgraded(item) {
   const bonusDef = getBonus(item, "defense");
   const bonusHp = getBonus(item, "hp");
 
-  // ==========================================
-  //                 SCALING 
-  // ==========================================
-  // Megjegyzés: nextLvl-t használunk, hogy a +1 upgrade "látszódjon".
-  const dmgAdd = 2 * nextLvl;        // weapon dmg növekedés
-  const defAdd = 0.3 * nextLvl;      // armor def növekedés
-  const hpAdd  = 5 * nextLvl;        // armor hp növekedés
-
-  // ✅ ÚJ: STR/INT is nő MINDEN itemen
-  const strAdd = 0.5* nextLvl;
+  const dmgAdd = 2 * nextLvl;
+  const defAdd = 0.3 * nextLvl;
+  const hpAdd = 5 * nextLvl;
+  const strAdd = 0.5 * nextLvl;
   const intAdd = 0.5 * nextLvl;
 
   const type = (item.type || "").toLowerCase();
@@ -55,36 +47,24 @@ function previewUpgraded(item) {
   const out = {
     name: item.name,
     upgrade_level: nextLvl,
-
-    // dmg
     min_dmg: min,
     max_dmg: max,
-
-    // statok
     bonus_strength: bonusStr,
     bonus_intellect: bonusInt,
     bonus_defense: bonusDef,
     bonus_hp: bonusHp,
   };
 
-  // Weapon: dmg + STR/INT is
   if (type === "weapon") {
     out.min_dmg = min + dmgAdd;
     out.max_dmg = max + dmgAdd;
-
     out.bonus_strength = bonusStr + strAdd;
     out.bonus_intellect = bonusInt + intAdd;
-
-   
-    // out.bonus_defense = bonusDef + defAdd * 0.25;
-    // out.bonus_hp = bonusHp + hpAdd * 0.25;
     return out;
   }
 
-  // Armor/Helmet/Accessory/egyéb: DEF/HP + STR/INT is
   out.bonus_defense = bonusDef + defAdd;
   out.bonus_hp = bonusHp + hpAdd;
-
   out.bonus_strength = bonusStr + strAdd;
   out.bonus_intellect = bonusInt + intAdd;
 
@@ -92,6 +72,8 @@ function previewUpgraded(item) {
 }
 
 export default function BlacksmithModal({ onClose }) {
+  const { t } = useLanguage();
+
   const [playerData, setPlayerData] = useState(null);
   const [playerItems, setPlayerItems] = useState([]);
   const [selectedItem, setSelectedItem] = useState(null);
@@ -118,7 +100,6 @@ export default function BlacksmithModal({ onClose }) {
 
   const handleClose = () => {
     setIsClosing(true);
-    // Megvárjuk, amíg a CSS animáció lefut (300ms)
     setTimeout(() => {
       onClose();
     }, 300);
@@ -129,16 +110,14 @@ export default function BlacksmithModal({ onClose }) {
     const seq = ++refreshSeq.current;
 
     const [p, items] = await Promise.all([fetchPlayer(), fetchItems()]);
-    if (seq !== refreshSeq.current) return; // elavult válasz
+    if (seq !== refreshSeq.current) return;
 
     setPlayerData(p);
     setPlayerItems(items || []);
     setSelectedItem((prev) => {
       if (items?.length) {
         return (
-          items.find(
-            (i) => prev && Number(i.owned_id) === Number(prev.owned_id)
-          ) || items[0]
+          items.find((i) => prev && Number(i.owned_id) === Number(prev.owned_id)) || items[0]
         );
       }
       return null;
@@ -150,27 +129,25 @@ export default function BlacksmithModal({ onClose }) {
       setLoading(false);
       return;
     }
+
     setLoading(true);
     refreshAll()
       .catch((e) => {
         console.error(e);
-        setError("Hiba a szerverrel való kapcsolatban.");
+        setError(t("blacksmithServerError"));
       })
       .finally(() => setLoading(false));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId]);
+  }, [userId, t]);
 
   const currentGold = num(playerData?.gold, 0);
   const upgradeCost = selectedItem
     ? (num(selectedItem.upgrade_level, 0) + 1) * 50
     : null;
+
   const notEnoughGold =
     selectedItem && upgradeCost != null && currentGold < upgradeCost;
 
-  const upgradedPreview = useMemo(
-    () => previewUpgraded(selectedItem),
-    [selectedItem]
-  );
+  const upgradedPreview = useMemo(() => previewUpgraded(selectedItem), [selectedItem]);
 
   const upgradeItem = async () => {
     if (!selectedItem || busy) return;
@@ -191,13 +168,13 @@ export default function BlacksmithModal({ onClose }) {
       const data = await res.json().catch(() => ({}));
 
       if (!res.ok || data?.success === false) {
-        setError(data?.error || data?.message || "A fejlesztés nem sikerült.");
+        setError(data?.error || data?.message || t("blacksmithUpgradeFailed"));
       } else {
         await refreshAll();
       }
     } catch (e) {
       console.error(e);
-      setError("Hálózati hiba.");
+      setError(t("networkError"));
     } finally {
       setBusy(false);
     }
@@ -231,7 +208,11 @@ export default function BlacksmithModal({ onClose }) {
     : null;
 
   return (
-    <div className={`fixed inset-0 bg-black/70 flex justify-center z-50 kovacs-overlay ${isClosing ? 'opacity-0' : 'opacity-100'}`}>
+    <div
+      className={`fixed inset-0 bg-black/70 flex justify-center z-50 kovacs-overlay ${
+        isClosing ? "opacity-0" : "opacity-100"
+      }`}
+    >
       <div
         className={`kovacs relative w-[85%] h-[85%] flex-col p-6 ${isClosing ? "closing" : ""}`}
         style={{
@@ -241,16 +222,21 @@ export default function BlacksmithModal({ onClose }) {
           backgroundRepeat: "no-repeat",
         }}
       >
-        <button onClick={handleClose} className="kilepes absolute top-3 right-3 text-center">
+        <button
+          onClick={handleClose}
+          className="kilepes absolute top-3 right-3 text-center"
+          aria-label={t("close")}
+          title={t("close")}
+        >
           X
         </button>
 
         {loading ? (
-          <div className="m-auto text-center">Betöltés...</div>
+          <div className="m-auto text-center">{t("loading")}</div>
         ) : (
           <>
-            <div className="info text-center ">
-              Fejlesztésre fordítható arany:{" "}
+            <div className="info text-center">
+              {t("upgradeGoldInfo")}{" "}
               <span className="arany text-yellow-300">{currentGold}</span>
             </div>
 
@@ -260,7 +246,7 @@ export default function BlacksmithModal({ onClose }) {
 
             <div className="mb-4 text-center">
               {playerItems.length === 0 ? (
-                <div className="nincstargy mt-1">Nincs tovább fejleszthető tárgyad.</div>
+                <div className="nincstargy mt-1">{t("noUpgradeableItems")}</div>
               ) : (
                 <select
                   className="itemSelect px-3 py-2"
@@ -282,9 +268,8 @@ export default function BlacksmithModal({ onClose }) {
             </div>
 
             <div className="flex justify-between flex-1">
-              {/* Current */}
               <div className="jelenlegiBorder w-[18%]">
-                <h2 className="jelenlegi text-center mb-2">Jelenlegi tárgy</h2>
+                <h2 className="jelenlegi text-center mb-2">{t("currentItem")}</h2>
                 <div className="jelenlegiStat text-center space-y-1">
                   {cur ? (
                     <>
@@ -292,9 +277,10 @@ export default function BlacksmithModal({ onClose }) {
                         {cur.name} +{cur.lvl}
                       </p>
 
-                      {/* dmg kiírás csak ha van */}
                       {(cur.dmg.min || cur.dmg.max) ? (
-                        <p>DMG: {cur.dmg.min}–{cur.dmg.max}</p>
+                        <p>
+                          DMG: {cur.dmg.min}–{cur.dmg.max}
+                        </p>
                       ) : null}
 
                       <p>STR: +{cur.str}</p>
@@ -308,13 +294,12 @@ export default function BlacksmithModal({ onClose }) {
                 </div>
               </div>
 
-              {/* Center */}
               <div className="w-1/3 flex flex-col items-center justify-center text-center">
                 <p className="fejlesztesiKoltseg">
-                  Fejlesztés költsége:{" "}
+                  {t("upgradeCost")}:{" "}
                   {selectedItem ? (
                     <span>
-                      <b className="arany text-yellow-300">{upgradeCost}</b> arany
+                      <b className="arany text-yellow-300">{upgradeCost}</b> {t("goldLower")}
                     </span>
                   ) : (
                     "-"
@@ -322,7 +307,7 @@ export default function BlacksmithModal({ onClose }) {
                 </p>
 
                 {notEnoughGold && (
-                  <p className="nincseleg mt-1">Nincs elég aranyod a fejlesztéshez.</p>
+                  <p className="nincseleg mt-1">{t("notEnoughGoldForUpgrade")}</p>
                 )}
 
                 <button
@@ -330,13 +315,12 @@ export default function BlacksmithModal({ onClose }) {
                   onClick={upgradeItem}
                   disabled={!selectedItem || busy || notEnoughGold}
                 >
-                  {busy ? "Feldolgozás..." : "Fejlesztés"}
+                  {busy ? t("processing") : t("upgrade")}
                 </button>
               </div>
 
-              {/* Preview */}
               <div className="fejlesztettBorder w-[18%]">
-                <h2 className="fejlesztett text-center mb-2">Fejlesztett tárgy</h2>
+                <h2 className="fejlesztett text-center mb-2">{t("upgradedItem")}</h2>
                 <div className="fejlesztettStat text-center space-y-1">
                   {nxt ? (
                     <>
@@ -345,7 +329,9 @@ export default function BlacksmithModal({ onClose }) {
                       </p>
 
                       {(nxt.dmg.min || nxt.dmg.max) ? (
-                        <p>DMG: {nxt.dmg.min}–{nxt.dmg.max}</p>
+                        <p>
+                          DMG: {nxt.dmg.min}–{nxt.dmg.max}
+                        </p>
                       ) : null}
 
                       <p>STR: +{nxt.str}</p>
