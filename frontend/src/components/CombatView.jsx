@@ -2372,7 +2372,7 @@ if (poisonNow && playerHPRef.current > 0) {
   setPlayerHP((prev) => {
     const newHP = Math.max(0, prev - pDmg);
     if (pDmg > 0) {
-      addHPPopup(-pDmg, "player");
+      addHPPopup(-pDmg, "player", false, "poison");
       pushLog(
             t("combatLogPoisonDamagePlayer", {
               dmg: pDmg,
@@ -2425,7 +2425,7 @@ if (poisonNow && playerHPRef.current > 0) {
     const newHP = Math.max(0, prev - poisonDmg);
 
     if (poisonDmg > 0) {
-      addHPPopup(-poisonDmg, "enemy");
+      addHPPopup(-poisonDmg, "enemy", false, "poison");
       pushLog(
         t("combatLogPoisonDamageEnemy", {
           dmg: poisonDmg,
