@@ -1,4 +1,5 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useMemo } from "react";
+import { useLanguage } from "./LanguageContext.jsx";
 import PathChoice from "./PathChoice";
 import CombatView from "./CombatView";
 import EventView from "./EventView";
@@ -9,40 +10,48 @@ import wizardBg from "../assets/pics/EVENT_WIZARD_PLACEHOLDER.png";
 import combatIntroVideo from "../assets/transitions/combat-intro.webm";
 
 const EVENT_CHANCE = 1.0; // TESZTHEZ 100% esély
-const EVENT_POOL = [
-  {
-    id: "wizard",
-    title: "Vándor varázsló",
-    story:
-      "Az út porában egy köpenyes varázsló lép eléd. Egy fiolát tart feléd.\n\n„Erőt ad… vagy elátkoz.”",
-    background: wizardBg,
-    choices: [
-      {
-        label: "Megiszom",
-        resolve: () => {
-          if (Math.random() < 0.7) return { dmgMult: 1.5, pathsLeft: 3 };
-          return { poisonTurns: 3, pathsLeft: 5 };
-        },
-      },
-      { label: "Elutasítom", resolve: () => null },
-    ],
-  },
-];
 
 export default function RunView() {
+  const { t } = useLanguage();
+
   const [screen, setScreen] = useState("path"); // path | loading | event | combat
   const [level, setLevel] = useState(1);
   const [activeEvent, setActiveEvent] = useState(null);
   const [runEffect, setRunEffect] = useState(null);
   const [pendingPath, setPendingPath] = useState(null);
 
-  const loadingLockRef = useRef(false); // ✅ egyszeri hívás biztosítás
+  const loadingLockRef = useRef(false);
   const [showTransition, setShowTransition] = useState(false);
+
+  const EVENT_POOL = useMemo(
+    () => [
+      {
+        id: "wizard",
+        title: t("eventWizardTitle"),
+        story: t("eventWizardStory"),
+        background: wizardBg,
+        choices: [
+          {
+            label: t("eventWizardDrink"),
+            resolve: () => {
+              if (Math.random() < 0.7) return { dmgMult: 1.5, pathsLeft: 3 };
+              return { poisonTurns: 3, pathsLeft: 5 };
+            },
+          },
+          {
+            label: t("eventWizardRefuse"),
+            resolve: () => null,
+          },
+        ],
+      },
+    ],
+    [t]
+  );
 
   function handlePathChoose(choice) {
     setPendingPath(choice);
     setScreen("loading");
-    loadingLockRef.current = false; // reset lock minden új pathnál
+    loadingLockRef.current = false;
   }
 
   function handleEventChoice(choice) {
@@ -65,31 +74,29 @@ export default function RunView() {
       setRunEffect(null);
     }
 
-    setScreen("path"); // vissza path választáshoz
+    setScreen("path");
   }
 
- function handleLoadingDone() {
-  // 1. Azonnali kilépés, ha már folyamatban van vagy nincs mit betölteni
-  if (!pendingPath || loadingLockRef.current) return;
-  
-  // 2. Azonnali lockolás és állapot ürítés (még a logika előtt!)
-  loadingLockRef.current = true;
-  setPendingPath(null); 
+  function handleLoadingDone() {
+    if (!pendingPath || loadingLockRef.current) return;
 
-  const chance = Number(EVENT_CHANCE);
-  const roll = Math.random();
-  const shouldEvent = chance >= 1 || roll < chance;
+    loadingLockRef.current = true;
+    setPendingPath(null);
 
-  console.log("[RunView] Loading done", { roll, chance, shouldEvent });
+    const chance = Number(EVENT_CHANCE);
+    const roll = Math.random();
+    const shouldEvent = chance >= 1 || roll < chance;
 
-  if (shouldEvent) {
-    const ev = EVENT_POOL[Math.floor(Math.random() * EVENT_POOL.length)];
-    setActiveEvent(ev);
-    setScreen("event");
-  } else {
-    startCombat();
+    console.log("[RunView] Loading done", { roll, chance, shouldEvent });
+
+    if (shouldEvent) {
+      const ev = EVENT_POOL[Math.floor(Math.random() * EVENT_POOL.length)];
+      setActiveEvent(ev);
+      setScreen("event");
+    } else {
+      startCombat();
+    }
   }
-}
 
   return (
     <div className="relative min-h-screen bg-black">
