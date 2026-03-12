@@ -54,3 +54,17 @@
   0% { transform: translateX(-50%) translateY(0); opacity: 1; }
   100% { transform: translateX(-50%) translateY(-40px); opacity: 0; }
 }
+.hp-popup.damage.poison {
+  color: #5cff5c;
+  text-shadow:
+    0 0 8px rgba(92, 255, 92, 0.45),
+    1px 1px 3px black;
+}
+
+.hp-popup.damage.crit.poison {
+  color: #9aff6b;
+  text-shadow:
+    0 0 12px rgba(154, 255, 107, 0.7),
+    0 0 6px rgba(92, 255, 92, 0.45),
+    1px 1px 4px black;
+}

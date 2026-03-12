@@ -184,4 +184,32 @@
   text-shadow: 0 0 8px #ff0000;
 }
 
+.loginLangSwitcher {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  z-index: 30;
+  display: flex;
+  gap: 8px;
+}
 
+.loginLangBtn {
+  min-width: 56px;
+  padding: 10px 14px;
+  border: 1px solid rgba(255, 220, 160, 0.35);
+  background: rgba(20, 0, 0, 0.72);
+  color: #ffe7b0;
+  cursor: pointer;
+  font-family: inherit;
+  transition: 0.2s ease;
+  backdrop-filter: blur(4px);
+}
+
+.loginLangBtn:hover {
+  transform: translateY(-1px);
+}
+
+.loginLangBtn.active {
+  border-color: rgba(255, 220, 160, 0.9);
+  box-shadow: 0 0 0 1px rgba(255, 220, 160, 0.3) inset;
+}

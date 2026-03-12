@@ -2,10 +2,11 @@
 import React, { useState, useEffect } from "react";
 import "./LoginScreen.css";
 import { usePlayer } from "../context/PlayerContext.jsx";
-
+import { useLanguage } from "./LanguageContext.jsx";
 
 export default function LoginScreen({ onLogin }) {
   const { setPlayer } = usePlayer();
+  const { t, language, setLanguage } = useLanguage();
 
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
@@ -35,27 +36,30 @@ export default function LoginScreen({ onLogin }) {
 
   async function handle() {
     if (!username.trim() && !email.trim()) {
-      showTempAlert("Adj meg egy felhasználónevet vagy email címet!");
+      showTempAlert(t("loginNeedIdentifier"));
       return;
     }
+
     if (!password.trim()) {
-      showTempAlert("Adj meg egy jelszót!");
+      showTempAlert(t("loginNeedPassword"));
       return;
     }
 
     try {
       if (isRegistering) {
         if (!email.trim()) {
-          showTempAlert("Adj meg egy email címet!");
+          showTempAlert(t("loginNeedEmail"));
           return;
         }
+
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(email)) {
-          showTempAlert("Érvénytelen email formátum!");
+          showTempAlert(t("loginInvalidEmail"));
           return;
         }
+
         if (password !== confirmPassword) {
-          showTempAlert("A jelszavak nem egyeznek!");
+          showTempAlert(t("loginPasswordsDontMatch"));
           return;
         }
 
@@ -66,8 +70,9 @@ export default function LoginScreen({ onLogin }) {
         });
 
         const regData = await regRes.json();
+
         if (!regRes.ok) {
-          showTempAlert(regData.error || "Sikertelen regisztráció!");
+          showTempAlert(regData.error || t("registerFailed"));
           return;
         }
 
@@ -76,11 +81,11 @@ export default function LoginScreen({ onLogin }) {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ identifier: username, password }),
         });
+
         const loginData = await loginRes.json();
+
         if (!loginRes.ok) {
-          showTempAlert(
-            loginData.error || "Regisztráltál, de a bejelentkezés nem sikerült."
-          );
+          showTempAlert(loginData.error || t("registerLoginFailed"));
           return;
         }
 
@@ -95,9 +100,11 @@ export default function LoginScreen({ onLogin }) {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ identifier: username || email, password }),
         });
+
         const loginData = await loginRes.json();
+
         if (!loginRes.ok) {
-          showTempAlert(loginData.error || "Hibás bejelentkezési adatok!");
+          showTempAlert(loginData.error || t("loginFailed"));
           return;
         }
 
@@ -108,17 +115,20 @@ export default function LoginScreen({ onLogin }) {
       }
     } catch (e) {
       console.error("Login error:", e);
-      showTempAlert("Szerver hiba történt!");
+      showTempAlert(t("serverError"));
     }
   }
 
   useEffect(() => {
     const handleKey = (e) => {
-      if (e.key === "Enter" && document.activeElement.tagName === "INPUT") handle();
+      if (e.key === "Enter" && document.activeElement.tagName === "INPUT") {
+        handle();
+      }
     };
+
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
-  }, [username, email, password, confirmPassword, isRegistering]);
+  }, [username, email, password, confirmPassword, isRegistering, language]);
 
   return (
     <div className="fixed inset-0 flex items-center justify-center overflow-hidden font-poppins">
@@ -128,6 +138,24 @@ export default function LoginScreen({ onLogin }) {
         }`}
       >
         {alertMessage}
+      </div>
+
+      {/* NYELVVÁLTÓ */}
+      <div className="loginLangSwitcher">
+        <button
+          type="button"
+          className={`loginLangBtn ${language === "hu" ? "active" : ""}`}
+          onClick={() => setLanguage("hu")}
+        >
+          HU
+        </button>
+        <button
+          type="button"
+          className={`loginLangBtn ${language === "en" ? "active" : ""}`}
+          onClick={() => setLanguage("en")}
+        >
+          EN
+        </button>
       </div>
 
       <video
@@ -142,17 +170,16 @@ export default function LoginScreen({ onLogin }) {
 
       <div className="loginBox relative z-10 w-11/12 sm:w-2/3 md:w-1/3 p-8 text-white shadow-2xl backdrop-blur-sm text-center">
         <h2 className="bejelentkezes">
-          {isRegistering ? "Regisztráció" : "Bejelentkezés"}
+          {isRegistering ? t("registerTitle") : t("loginTitle")}
         </h2>
+
         <p className="parancs">
-          {isRegistering
-            ? "*Hozz létre egy új fiókot*"
-            : "*Adj meg egy felhasználónevet és jelszavat a belépéshez*"}
+          {isRegistering ? t("registerSubtitle") : t("loginSubtitle")}
         </p>
 
         <input
           type="text"
-          placeholder="Felhasználónév"
+          placeholder={isRegistering ? t("usernamePlaceholder") : t("identifierPlaceholder")}
           value={username}
           onChange={(e) => setUsername(e.target.value)}
           className="felhasznalonev bg-red-950 w-full p-3 mb-5 text-yellow-100 text-center placeholder-yellow-100 focus:outline-none focus:ring-2 focus:ring-red-700"
@@ -161,7 +188,7 @@ export default function LoginScreen({ onLogin }) {
         {isRegistering && (
           <input
             type="email"
-            placeholder="Email"
+            placeholder={t("emailPlaceholder")}
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             className="email bg-red-950 w-full p-3 mb-5 text-yellow-100 text-center placeholder-yellow-100 focus:outline-none focus:ring-2 focus:ring-red-700"
@@ -170,7 +197,7 @@ export default function LoginScreen({ onLogin }) {
 
         <input
           type="password"
-          placeholder="Jelszó"
+          placeholder={t("passwordPlaceholder")}
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           className="jelszo bg-red-950 w-full p-3 mb-5 text-yellow-100 text-center placeholder-yellow-100 focus:outline-none focus:ring-2 focus:ring-red-700"
@@ -179,7 +206,7 @@ export default function LoginScreen({ onLogin }) {
         {isRegistering && (
           <input
             type="password"
-            placeholder="Jelszó megerősítése"
+            placeholder={t("confirmPasswordPlaceholder")}
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
             className="jelszo bg-red-950 w-full p-3 mb-5 text-yellow-100 text-center placeholder-yellow-100 focus:outline-none focus:ring-2 focus:ring-red-700"
@@ -187,28 +214,28 @@ export default function LoginScreen({ onLogin }) {
         )}
 
         <button onClick={handle} className="button">
-          {isRegistering ? "REGISZTRÁCIÓ" : "TOVÁBB"}
+          {isRegistering ? t("registerButton") : t("continueUpper")}
         </button>
 
         <p className="regisztracioText">
           {isRegistering ? (
             <>
-              <span className="regText">Van már fiókod?</span>{" "}
+              <span className="regText">{t("alreadyHaveAccount")}</span>{" "}
               <span
                 className="regisztracioLink"
                 onClick={() => setIsRegistering(false)}
               >
-                Jelentkezz be
+                {t("switchToLogin")}
               </span>
             </>
           ) : (
             <>
-              <span className="regText">Nincs még fiókod?</span>{" "}
+              <span className="regText">{t("noAccountYet")}</span>{" "}
               <span
                 className="regisztracioLink"
                 onClick={() => setIsRegistering(true)}
               >
-                Regisztrálj
+                {t("switchToRegister")}
               </span>
             </>
           )}
@@ -222,36 +249,33 @@ export default function LoginScreen({ onLogin }) {
               className="logoItem"
               href="https://www.youtube.com"
               target="_blank"
+              rel="noreferrer"
             >
-              <img
-                className="logo"
-                src="/images/YT.png"
-                alt="youtube"
-              />
+              <img className="logo" src="/images/YT.png" alt="youtube" />
               <p className="socialMediaNames">YouTube</p>
             </a>
           </div>
+
           <div>
             <a
               className="logoItem"
               href="https://www.x.com"
               target="_blank"
+              rel="noreferrer"
             >
               <img className="logo" src="/images/X.png" alt="x" />
               <p className="socialMediaNames">X</p>
             </a>
           </div>
+
           <div>
             <a
               className="logoItem"
               href="https://www.discord.com"
               target="_blank"
+              rel="noreferrer"
             >
-              <img
-                className="logo"
-                src="/images/DC.png"
-                alt="discord"
-              />
+              <img className="logo" src="/images/DC.png" alt="discord" />
               <p className="socialMediaNames">Discord</p>
             </a>
           </div>
