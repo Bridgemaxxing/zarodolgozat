@@ -85,7 +85,7 @@
 
 .quest-paper-close-text:hover{
 
-  color: #5c0000;
+  color: #c72222;
 
 }
 
@@ -93,4 +93,8 @@
   background: white;
   opacity: 5%;
   filter: blur(100%);
+}
+
+.szovegek{
+  color: rgb(44, 44, 44);
 }

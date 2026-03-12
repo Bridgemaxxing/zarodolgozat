@@ -1,7 +1,7 @@
 // frontend/src/components/QuestDetailsModal.jsx
 import React, { useState } from "react";
 import { usePlayer } from "../context/PlayerContext.jsx";
-
+import "./QuestBoardModal.css";
 
 export default function QuestDetailsModal({
   quest,
@@ -134,21 +134,17 @@ export default function QuestDetailsModal({
     
 
     {/* SAFE TEXT AREA */}
-    <div
+    <div className="szovegek"
       style={{
         //background:"black",
         position: "absolute",
-
         top: "150px",
         left: "240px",
-
         width: "440px",
         height: "450px",
-
         overflow: "hidden",
-
         textAlign: "center",
-        color: "black",
+        //color: "black",
         fontSize: "30px",
         lineHeight: "1.25",
 
