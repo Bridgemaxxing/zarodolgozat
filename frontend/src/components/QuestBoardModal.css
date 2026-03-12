@@ -1,36 +1,96 @@
-@keyframes boardDropIn {
-  0% {
-    transform: rotateX(-90deg);
-    opacity: 0;
-  }
-  60% {
-    transform: rotateX(15deg);
-    opacity: 1;
-  }
-  80% {
-    transform: rotateX(-8deg);
-  }
-  100% {
-    transform: rotateX(0deg);
-  }
+.kilepes{
+    color: #fef9c2;
+     background-color: #460809;
+     text-align: center;
+     font-size: 20px;
+     font-family: "Jersey 10", sans-serif;
+     box-shadow: 0px 5px black, 0px -5px black, 5px 0px black, -5px 0px black, 0px 10px #00000038, 5px 5px #00000038, -5px 5px #00000038, inset 0px 5px #ffffff36;
+     cursor: pointer;
+     
 }
 
-@keyframes boardDropOut {
-  0% {
-    transform: rotateX(0deg);
-    opacity: 1;
-  }
-  100% {
-    transform: rotateX(-90deg);
-    opacity: 0;
-  }
+
+.quest-icon {
+
+  position: absolute;
+
+  width: 240px;
+  height: 240px;
+
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-family: "Jersey 10", sans-serif;
+  font-size: 42px;
+
+  cursor: pointer;
+
 }
 
-.quest-board-container {
-  transform-origin: top center;
-  animation: boardDropIn 0.6s ease-out forwards;
+/* PNG OUTLINE TRICK */
+.quest-icon:hover{
+
+  transform: scale(1.05);
+
+  filter:
+    drop-shadow(0 0 4px #ffd700)
+    drop-shadow(0 0 4px #ffd700)
+    drop-shadow(0 0 4px #ffd700);
+
 }
 
-.quest-board-container.closing {
-  animation: boardDropOut 0.35s ease-in forwards;
+.quest-text-button{
+
+  font-family: "Jersey 10", sans-serif;
+  font-size: 26px;
+
+  background: transparent;
+  border: none;
+
+  color: black;
+
+  cursor: pointer;
+
+  transition: color 0.2s;
+}
+
+.quest-text-button:hover{
+
+  color: #c9a000;
+
+}
+
+.quest-paper-close-text{
+
+  font-family: "Jersey 10", sans-serif;
+  font-size: 32px;
+
+  background: transparent;
+  border: none;
+
+  color: black;
+
+  cursor: pointer;
+
+  margin-top: 10px;   /* EZT tudod állítani ha feljebb/lejjebb kell */
+
+  transition: color 0.2s;
+
+}
+
+.quest-paper-close-text:hover{
+
+  color: #5c0000;
+
+}
+
+.baldiv:hover{
+  background: white;
+  opacity: 5%;
+  filter: blur(100%);
 }

@@ -9,42 +9,37 @@ export default function QuestBoardModal({
   onClose,
   onStartQuestBattle,
 }) {
+
   const classIdNum = Number(playerClassId);
+
   const [quests, setQuests] = useState([]);
   const [selectedQuest, setSelectedQuest] = useState(null);
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState("");
   const [closing, setClosing] = useState(false);
-
-
-  const NORMAL_POS = [
-    { top: "25%", left: "20%" },
-    { top: "37%", left: "20%" },
-    { top: "49%", left: "20%" },
-    { top: "61%", left: "20%" },
-    { top: "73%", left: "20%" },
-  ];
-  const CLASS_POS = { top: "50%", left: "68%" };
+  const [boardOpen, setBoardOpen] = useState(false);
 
   const loadQuests = useCallback(async () => {
     if (!playerId) return;
+
     try {
       setLoading(true);
-      const res = await fetch(`https://nodejs202.dszcbaross.edu.hu/api/quests/${playerId}`);
+
+      const res = await fetch(
+        `https://nodejs202.dszcbaross.edu.hu/api/quests/${playerId}`
+      );
+
       const data = await res.json();
 
       const filtered = (data || []).filter(
-        (q) => q.class_required === null || Number(q.class_required) === classIdNum
+        (q) =>
+          q.class_required === null ||
+          Number(q.class_required) === classIdNum
       );
 
       setQuests(filtered);
-
-      setSelectedQuest((prev) => {
-        if (!prev) return null;
-        return filtered.find((x) => x.quest_id === prev.quest_id) || prev;
-      });
-
       setErrorMsg("");
+
     } catch (err) {
       console.error(err);
       setErrorMsg("Nem sikerült betölteni a küldetéseket.");
@@ -53,68 +48,122 @@ export default function QuestBoardModal({
     }
   }, [playerId, classIdNum]);
 
-  useEffect(() => { loadQuests(); }, [loadQuests]);
-
   useEffect(() => {
-    function onKey(e) { if (e.key === "Escape") handleClose?.(); }
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [onClose]);
-
-  function statusColor(q) {
-    if (q.status === "completed") return "text-green-300";
-    if (q.status === "in_progress") return "text-yellow-200";
-    if (q.status === "locked") return "text-gray-400 opacity-60";
-    if (q.status === "claimed") return "text-blue-300";
-    return "text-white";
-  }
+    loadQuests();
+  }, [loadQuests]);
 
   function handleClose() {
-  setClosing(true);
+    setClosing(true);
+    setTimeout(() => {
+      onClose?.();
+    }, 350);
+  }
 
-  setTimeout(() => {
-    onClose?.();
-  }, 350);
-}
-
-
+  const positions = [
+  { top: "22%", left: "12%", rotate: "-6deg" },
+  { top: "23%", left: "38%", rotate: "4deg" },
+  { top: "17%", left: "62%", rotate: "-3deg" },
+  { top: "50%", left: "15%", rotate: "5deg" },
+  { top: "50%", left: "42%", rotate: "-5deg" },
+  { top: "48%", left: "66%", rotate: "3deg" },
+];
   return (
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
-      <div
-  className={`quest-board-container relative rounded-xl shadow-2xl overflow-hidden ${closing ? "closing" : ""}`}
 
-        style={{ width: "90vw", height: "90vh", maxWidth: 1400, maxHeight: 900 }}
+      <div
+        className={`quest-board-container relative rounded-xl shadow-2xl overflow-hidden ${
+          closing ? "closing" : ""
+        }`}
+        style={{
+          width: "90vw",
+          height: "90vh",
+          maxWidth: 1400,
+          maxHeight: 900,
+        }}
       >
+
+        {/* QUESTWINDOW */}
         <div
           className="absolute inset-0 bg-cover bg-center pointer-events-none"
-          style={{ backgroundImage: 'url("/images/QUESTBOARD.png")' }}
+          style={{ backgroundImage: 'url("/images/QUESTWINDOW.png")' }}
         />
 
         <button
           onClick={handleClose}
-          className="absolute top-3 right-5 z-30 text-white text-2xl font-bold drop-shadow-lg hover:text-red-400"
+          className="kilepes absolute top-5 right-6 z-30"
         >
-          ✕
+          X
         </button>
 
-        <div className="absolute inset-0 z-20">
-          {!loading &&
-            quests.map((q, idx) => {
-              const pos = q.class_required === null ? NORMAL_POS[idx] : CLASS_POS;
-              if (!pos) return null;
+        {/* BAL DIV */}
+        <div
+          onClick={() => setBoardOpen(true)}
+          className="baldiv absolute cursor-pointer z-20"
+          style={{
+            //background:"black",
+            top: "22%",
+            left: "8%",
+            width: "25%",
+            height: "32%",
+          }}
+        />
 
-              return (
-                <button
-                  key={q.pq_id ?? `${q.player_id}-${q.quest_id}`}
-                  onClick={() => setSelectedQuest(q)}
-                  className={`absolute z-20 text-lg font-bold cursor-pointer font-serif hover:scale-110 transition ${statusColor(q)}`}
-                  style={{ top: pos.top, left: pos.left, textShadow: "2px 2px 4px black" }}
-                >
-                  ► {q.title}
-                </button>
-              );
-            })}
-        </div>
+        {/* JOBB DIV */}
+        <div
+          className="absolute cursor-pointer z-20"
+          style={{
+            top: "25%",
+            right: "24%",
+            width: "20%",
+            height: "35%",
+          }}
+        />
+
+        {/* QUEST BOARD */}
+        {boardOpen && (
+          <div className="bg-black/70 absolute inset-0 flex items-center justify-center z-40">
+
+            <div
+              className="relative bg-cover bg-center"
+              style={{
+                width: "900px",
+                height: "700px",
+                backgroundImage: 'url("/images/QUESTBOARD.png")',
+              }}
+            >
+
+              <button
+                onClick={() => setBoardOpen(false)}
+                className="kilepes absolute top-6 right-8"
+              >
+                X
+              </button>
+
+              {quests.slice(0,6).map((q, i) => {
+
+                const pos = positions[i];
+
+                return (
+                  <div
+                    key={i}
+                    onClick={() => setSelectedQuest({ ...q, paperIndex: i })}
+                    className="quest-icon"
+                    style={{
+                      backgroundImage: `url(/images/quest${i+1}.png)`,
+                      top: pos.top,
+                      left: pos.left,
+                      transform: `rotate(${pos.rotate})`
+                    }}
+                  >
+                    {i+1}.
+                  </div>
+                );
+              })}
+
+            </div>
+
+          </div>
+        )}
 
         {errorMsg && (
           <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-30 text-yellow-200 text-sm bg-black/60 px-4 py-2 rounded">
@@ -131,13 +180,13 @@ export default function QuestBoardModal({
               setSelectedQuest(null);
               loadQuests();
             }}
-            // ✅ ide adjuk át
             onStartQuestBattle={(payload) => {
               onStartQuestBattle?.(payload);
-              onClose?.(); // bezárja a boardot, hogy látszódjon a combat
+              onClose?.();
             }}
           />
         )}
+
       </div>
     </div>
   );
