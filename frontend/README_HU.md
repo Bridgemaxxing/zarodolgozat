@@ -27,7 +27,7 @@ A játék célja, hogy a játékos folyamatosan fejlődjön, új kihívásokkal 
 ![Hub placeholder](images_for_readme/hub.png)
 
 
-### Inventory rendszer
+### Leltár rendszer
 ![Inventory placeholder](images_for_readme/inv.png)
 
 
@@ -101,7 +101,7 @@ A fejlesztés során fontos cél volt, hogy a játék rendszerei később **kön
 - vizuális effektek megvalósítása a játék különböző részein
 - a küldetések menüjének és megjelenítésének elkészítése
 - loading screen létrehozása a kalandok indulása előtt
-- inventory rendszer
+- inventory - leltár rendszer
 
 ### Kovács Hunor Krisztián
 
@@ -122,7 +122,7 @@ A fejlesztés során fontos cél volt, hogy a játék rendszerei később **kön
 - véletlenszerű események
 - ellenség- és encounterkezelés
 - felszerelésrendszer
-- inventory rendszer
+- inventory - leltár rendszer
 - küldetésrendszer
 - tutorial rendszer
 - Hub rendszer

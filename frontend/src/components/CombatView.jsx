@@ -1,6 +1,9 @@
 // frontend/src/components/CombatView.jsx
 import React, { useEffect, useState, useMemo, useRef } from "react";
 import { usePlayer } from "../context/PlayerContext.jsx";
+import staminaFrameMage from "/images/staminabarmage.png";
+import staminaFrameWarrior from "/images/staminabarwarrior.png";
+import staminaFrameArcher from "/images/staminabararcher.png";
 import { getRandomEnemy } from "./enemyData";
 import "./CombatView.css";
 import EnemyFrame from "./EnemyFrame";
@@ -47,6 +50,11 @@ import {
 
 const BASE_UI_SCALE = 0.8;
 
+const STAMINA_UI_POS = {
+  left: "62%",
+  bottom: "310px",
+  transform: "translateX(-50%)",
+};
 
 const PET_UI = {
   wrapperStyle: {
@@ -146,7 +154,32 @@ function getCardStaminaCost(card) {
 
   return 1;
 }
+function getCardTooltipTags(card, t) {
+  const tags = [];
 
+  if (card.type === "attack") tags.push(t("cardTagAttack"));
+  if (card.type === "defend") tags.push(t("cardTagDefend"));
+  if (card.type === "heal") tags.push(t("cardTagHeal"));
+
+  if (card.stunTurns > 0) tags.push(t("cardTagStun"));
+  if (card.bleed) tags.push(t("cardTagBleed"));
+  if (card.poison) tags.push(t("cardTagPoison"));
+  if (card.burn) tags.push(t("cardTagBurn"));
+  if (card.hits > 1) tags.push(t("cardTagMultiHit", { hits: card.hits }));
+  if (card.evasionTurns > 0) tags.push(t("cardTagEvasion"));
+  if (card.defenseTurns > 0) tags.push(t("cardTagDefense"));
+  if (card.vulnerabilityDebuff) tags.push(t("cardTagVulnerable"));
+  if (card.damageBuff) tags.push(t("cardTagDamageBuff"));
+  if (card.drain) tags.push(t("cardTagDrain"));
+  if (card.petHeal > 0) tags.push(t("cardTagPetHeal"));
+  if (card.petTauntTurns > 0) tags.push(t("cardTagPetTaunt"));
+  if (card.petBiteBonus > 0) tags.push(t("cardTagPetCommand"));
+  if (card.executeBelowPercent != null) {
+    tags.push(t("cardTagExecute", { percent: card.executeBelowPercent }));
+  }
+
+  return tags;
+}
 const CLASS_CONFIG = {
   6: { key: "warrior", displayName: "Harcos", sprite: "/ui/player/player.png" },
   7: { key: "mage", displayName: "Varázsló", sprite: "/ui/player/varazslo.png" },
@@ -596,6 +629,11 @@ function TutorialOverlay({ open, step, steps, onNext, onSkip }) {
   );
 }
 
+const staminaFrames = {
+  mage: staminaFrameMage,
+  warrior: staminaFrameWarrior,
+  archer: staminaFrameArcher,
+};
 
 // Optional prop: `playerHP` can be passed from the parent (e.g. GameController).
 // If provided, CombatView will prefer it over sessionStorage when initializing HP,
@@ -739,7 +777,7 @@ function skipTutorial() {
   finishTutorial();
 }
 
-  // ✅ RUN HP PERSIST (sessionStorage) — B-E megoldás
+  // RUN HP PERSIST (sessionStorage) — B-E megoldás
   const hpStoreKey = player?.id ? `adventure_hp_${player.id}` : null;
 
   function readStoredHP() {
@@ -749,7 +787,7 @@ function skipTutorial() {
     return Number.isFinite(n) ? n : null;
   }
 
-  // ✅ Persist current HP into sessionStorage (so it survives wave-to-wave remounts)
+  // Persist current HP into sessionStorage (so it survives wave-to-wave remounts)
   useEffect(() => {
     if (!hpStoreKey) return;
     if (!hpHydratedRef.current) return; // don't overwrite before we loaded once
@@ -769,7 +807,7 @@ function skipTutorial() {
     sessionStorage.removeItem(hpStoreKey);
   }
 
-  // ❌ FONTOS: ezt kivettük, mert battleOver/end állapotban visszahúzta a HP-t derivedStats.hp-ra (ami nálad max HP)
+  // FONTOS: ezt kivettük, mert battleOver/end állapotban visszahúzta a HP-t derivedStats.hp-ra
   // useEffect(() => {
   //   if (turn !== "player" && turn !== "enemy") {
   //     const hp = derivedStats?.hp ?? player?.hp;
@@ -784,6 +822,10 @@ function skipTutorial() {
 
   const classKey = useMemo(() => getClassKeyFromId(player?.class_id), [player?.class_id]);
 
+   const currentStaminaFrame = useMemo(() => {
+    return staminaFrames[classKey] || staminaFrameMage;
+  }, [classKey]); 
+
   const [enemy, setEnemy] = useState(null);
   const [enemyHP, setEnemyHP] = useState(0);
   const [battleOver, setBattleOver] = useState(false);
@@ -791,7 +833,8 @@ function skipTutorial() {
 
   const [pendingEnemies, setPendingEnemies] = useState([]); // chain battle queue
 
-
+  const [tooltipCardId, setTooltipCardId] = useState(null);
+  const hoverTimerRef = useRef(null);
   
 
   // ✅ battleOver ref
@@ -1014,6 +1057,20 @@ function debugStun(label, extra = {}) {
   });
 }
 
+function handleCardMouseEnter(cardId) {
+  clearTimeout(hoverTimerRef.current);
+  setTooltipCardId(null);
+  //hoover állítása a kártyákon
+  hoverTimerRef.current = setTimeout(() => {
+    setTooltipCardId(cardId);
+  }, 600);
+}
+
+function handleCardMouseLeave() {
+  clearTimeout(hoverTimerRef.current);
+  setTooltipCardId(null);
+}
+
   const bg = useMemo(() => resolveBackground(background, pathType), [background, pathType]);
 
   const rarityStyle = {
@@ -1110,6 +1167,11 @@ function getLogColorClass(msg) {
   return "text-[#d1c7a7]";
 }
 
+useEffect(() => {
+  return () => {
+    clearTimeout(hoverTimerRef.current);
+  };
+}, []);
 
 // unmount cleanup (nehogy lógjon timer)
 useEffect(() => {
@@ -2747,7 +2809,6 @@ async function handleContinue() {
   return { xpGain, goldGain };
 }
 
-
   // =========================================================
   // DEFEAT -> Run End (Hub full heal)
   // =========================================================
@@ -3341,7 +3402,7 @@ return (
           <div   ref={(el) => {
             playerAnchorRef.current = el;
             tutPlayerRef.current = el; // ✅ tutorial ide tud spotlightolni
-          }} className="absolute top-24 left-[20%] -translate-x-1/2 z-10 transition-all duration-500 ease-in-out">
+          }} className="absolute top-5 left-[20%] -translate-x-1/2 z-10 transition-all duration-500 ease-in-out">
             <div className="relative inline-block rounded-xl overflow-hidden" style={typeof warriorFrameStyle !== 'undefined' ? warriorFrameStyle : {}}>
               {activeAuraId && (
                 <div className="absolute z-[60] whitespace-nowrap pointer-events-none" style={{ top: "-30px", left: "0" }}>
@@ -3366,7 +3427,7 @@ return (
               enemyAnchorRef.current = el;
               tutEnemyRef.current = el;
             }}
-            className="absolute top-24 left-[80%] -translate-x-1/2 z-10"
+            className="absolute top-5 left-[80%] -translate-x-1/2 z-10"
           >
             <div className="relative">
               <EnemyFrame name={enemy?.name} hp={enemyHP} maxHP={enemy?.maxHp} image={enemyImage(enemy?.name)} damaged={enemyDamaged}   affixes={enemy?.affixes || []} />
@@ -3385,7 +3446,7 @@ return (
           
           <div
             ref={tutLogRef}
-            className="absolute top-[62%] left-1/2 -translate-x-1/2
+            className="absolute top-[55%] left-1/2 -translate-x-1/2
               w-3/4 max-w-2xl h-52
               bg-[#080808] 
               pixel-text-sharp
@@ -3415,78 +3476,158 @@ return (
             <div className="h-1 w-full bg-gradient-to-r from-transparent via-[#4d0a0a]/30 to-transparent" />
           </div>
 
-          {/* KÁRTYÁK (HAND) */}
+        {/* KÁRTYÁK (HAND) */}
           {!battleOver && (
-            <div ref={tutHandRef} className="absolute left-1/2 -translate-x-1/2 flex gap-4 z-50" style={{ bottom: "-80px", pointerEvents: allowHand ? "auto" : "none" }}>
-              {!battleOver && turn === "player" && (
-       
-                    <button
-                    onClick={passTurn}
-                    className="absolute left-1/2 -translate-x-1/2 z-[80] px-8 py-3 rounded-lg border-2 border-gray-700 bg-black/80 hover:bg-black text-white pixel-text-sharp"
-                    style={{ bottom: "240px", marginLeft: "500px" }}
-                  >
-                    {t("passTurnUpper")}
-                  </button>
-                )}
-              {!battleOver && (
             <div
-              className="absolute left-1/2 -translate-x-1/2 z-70 px-4 py-2 rounded-lg border-2 border-gray-700 bg-black/70 text-xl pixel-text-sharp"
-              style={{ bottom: "500px" }}
+              ref={tutHandRef}
+              className="absolute left-1/2 -translate-x-1/2 flex gap-4 z-50"
+              style={{ bottom: "-80px", pointerEvents: allowHand ? "auto" : "none" }}
             >
-              {t("stamina")}: {playerStamina}/{PLAYER_MAX_STAMINA}
+              {!battleOver && turn === "player" && (
+                <button
+                  onClick={passTurn}
+                  className="passTurnButton absolute left-1/2 -translate-x-1/2 z-[80] pixel-text-sharp"
+                  style={{ bottom: "260px", marginLeft: "500px" }}
+                >
+                  {t("passTurnUpper")}
+                </button>
+              )}
+
+              {/* STAMINA BAR - külön, szabadon mozgatható */}
+              {!battleOver && (
+                <div
+                  className="staminaHud absolute z-[70]"
+                  style={{
+                    left: "50%",
+                    bottom: "250px",
+                    transform: "translateX(-50%)",
+                  }}
+                >
+                  <div
+                    className={`staminaBarWrap stamina-${classKey || "mage"} stamina-level-${playerStamina}`}
+                  >
+                    <div className={`staminaSeg left ${playerStamina >= 1 ? "active" : ""}`} />
+                    <div className={`staminaSeg mid ${playerStamina >= 2 ? "active" : ""}`} />
+                    <div className={`staminaSeg right ${playerStamina >= 3 ? "active" : ""}`} />
+
+                    <img
+                      src={currentStaminaFrame}
+                      alt="stamina bar"
+                      className="staminaFrameImg"
+                      draggable="false"
+                    />
+                  </div>
+                </div>
+              )}
+
+{hand.map((card, slotIndex) => {
+  if (!card) {
+    return (
+      <div
+        key={`empty-${slotIndex}`}
+        className="w-40 h-60 rounded-xl border-4 border-gray-700 bg-black/30"
+      />
+    );
+  }
+
+  const rs = rarityStyle[card.rarity] ?? rarityStyle.common;
+  const animClass =
+    card._played ? "card-anim-play" : card._anim === "draw" ? "card-anim-draw" : "";
+
+  const tooltipTags = getCardTooltipTags(card, t);
+  const showTooltip = tooltipCardId === card._instanceId;
+
+  const staminaColorClass =
+    classKey === "mage"
+      ? "text-cyan-300"
+      : classKey === "warrior"
+      ? "text-red-400"
+      : "text-emerald-300";
+
+  return (
+    <div key={card._instanceId} className="relative w-40 h-60">
+      {showTooltip && tooltipTags.length > 0 && (
+        <div className="absolute left-1/2 -top-4 -translate-x-1/2 -translate-y-full z-[120] w-96 rounded-xl border-2 border-yellow-700/80 bg-black/95 px-6 py-5 shadow-[0_0_20px_rgba(0,0,0,0.85)] pointer-events-none">
+          <div className="text-xl text-yellow-300 pixel-text-sharp text-center mb-4">
+            {t("cardInfoTitle")}
+          </div>
+
+          <div className="flex flex-wrap gap-3 justify-center">
+            {tooltipTags.map((tag, i) => (
+              <span
+                key={`${card._instanceId}-${i}-${tag}`}
+                className="rounded-md bg-white/10 px-4 py-3 text-lg text-gray-100 pixel-text-sharp leading-tight"
+              >
+                {tag}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <button
+        onClick={() => playCardAt(slotIndex)}
+        onMouseEnter={() => handleCardMouseEnter(card._instanceId)}
+        onMouseLeave={handleCardMouseLeave}
+        onFocus={() => handleCardMouseEnter(card._instanceId)}
+        onBlur={handleCardMouseLeave}
+        disabled={turn !== "player" || card._played}
+        className={`relative w-full h-full rounded-xl overflow-hidden border-4 ${rs.border} ${rs.glow} transform transition-transform duration-200 ${
+          turn === "player" && !card._played ? "hover:scale-125" : ""
+        } ${animClass}`}
+        style={{ pointerEvents: allowHand ? "auto" : "none" }}
+      >
+        <img
+          src={card.image}
+          alt={card.name}
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+
+        {/* BAL FELSŐ STAMINA SZÁM */}
+        <div className="absolute top-2 left-3 z-20">
+          <span
+            className={`text-[34px] leading-none pixel-text-sharp drop-shadow-[2px_2px_0_rgba(0,0,0,0.95)] ${staminaColorClass}`}
+          >
+            {getCardStaminaCost(card)}
+          </span>
+        </div>
+
+        <div className="absolute bottom-0 w-full bg-black/70 text-center p-1 text-sm pixel-text-sharp">
+          <div className="text-lg">{card.name}</div>
+
+          {card.hits > 1 && (
+            <div className="text-[10px] text-gray-200">
+           
             </div>
           )}
-              {hand.map((card, slotIndex) => {
-                if (!card) return <div key={`empty-${slotIndex}`} className="w-40 h-60 rounded-xl border-4 border-gray-700 bg-black/30" />;
-                const rs = rarityStyle[card.rarity] ?? rarityStyle.common;
-                const animClass = card._played ? "card-anim-play" : card._anim === "draw" ? "card-anim-draw" : "";
-                return (
-                  <button
-                    key={card._instanceId}
-                    onClick={() => playCardAt(slotIndex)}
-                    disabled={turn !== "player" || card._played}
-                    className={`relative w-40 h-60 rounded-xl overflow-hidden border-4 ${rs.border} ${rs.glow} transform transition-transform duration-200 ${turn === "player" && !card._played ? "hover:scale-125" : ""} ${animClass}`}
-                    style={{ pointerEvents: allowHand ? "auto" : "none" }}
-                  >
-                    <img src={card.image} alt={card.name} className="absolute inset-0 w-full h-full object-cover" />
-                    <div className="absolute bottom-0 w-full bg-black/70 text-center p-1 text-sm pixel-text-sharp">
-                      <div className="text-lg">{card.name}</div>
 
-                      <div className="text-md text-yellow-300">
-                        {t("stamina")}: {getCardStaminaCost(card)}
-                      </div>
-
-                      {card.hits > 1 && (
-                        <div className="text-[10px] text-gray-200">
-                          {t("hits")}: x{card.hits}
-                        </div>
-                      )}
-
-                      {card.petTauntTurns > 0 && (
-                        <div className="text-[10px] text-emerald-300 tracking-tighter">
-                          {t("taunt")}: {card.petTauntTurns} kör
-                        </div>
-                      )}
-                    </div>
-                  </button>
-                );
-              })}
+          {card.petTauntTurns > 0 && (
+            <div className="text-[10px] text-emerald-300 tracking-tighter">
+              {t("taunt")}: {card.petTauntTurns} {t("turns")}
+            </div>
+          )}
+        </div>
+      </button>
+    </div>
+  );
+})}
             </div>
           )}
 
           {/* CSATA VÉGE (GYŐZELEM / VERESÉG) */}
           {battleOver && pendingEnemies.length === 0 && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center z-50">
+            <div className="absolute inset-0 flex flex-col items-center justify-center z-50 -translate-y-16">
               <div className="text-6xl mb-6 pixel-text-sharp drop-shadow-[0_0_15px_rgba(255,0,0,0.5)]">
-               {playerHP <= 0 ? t("defeatUpper") : t("victoryUpper")}
+                {playerHP <= 0 ? t("defeatUpper") : t("victoryUpper")}
               </div>
+
               <button
                 onClick={() => {
                   if (continueLockRef.current) return;
                   continueLockRef.current = true;
                   setFadeOpen(true);
                 }}
-                className="px-10 py-4 rounded-lg bg-[#2a0505] border-2 border-[#5e0a0a] hover:bg-[#3d0a0a] transition text-2xl pixel-text-sharp"
+                className="continueBattleButton pixel-text-sharp"
               >
                 {t("continueUpper")}
               </button>

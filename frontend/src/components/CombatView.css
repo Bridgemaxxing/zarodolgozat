@@ -199,4 +199,268 @@
     filter: grayscale(0) brightness(1);
   }
 }
+.staminaHud {
+  width: 350px;
+  pointer-events: none;
+}
 
+.staminaBarWrap {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1275 / 285;
+}
+
+.staminaFrameImg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  z-index: 4;
+  user-select: none;
+  pointer-events: none;
+}
+
+.staminaSeg {
+  position: absolute;
+  top: 21%;
+  height: 50%;
+  z-index: 2;
+  overflow: hidden;
+  opacity: 1;
+  transition:
+    opacity 0.22s ease,
+    filter 0.22s ease,
+    transform 0.22s ease;
+}
+
+/* sötét háttér, hogy az üres slot is olvasható maradjon */
+.staminaSeg {
+  background: rgba(0, 0, 0, 0.45);
+}
+
+/* színes belső töltet */
+.staminaSeg::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(to bottom, rgba(255,255,255,0.22), rgba(255,255,255,0.03)),
+    linear-gradient(to right, var(--stamina-main), var(--stamina-dark));
+  transition:
+    filter 0.22s ease,
+    opacity 0.22s ease,
+    box-shadow 0.22s ease;
+}
+
+/* külön glow réteg */
+.staminaSeg::after {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  background: var(--stamina-main);
+  opacity: 0;
+  filter: blur(10px);
+  transition:
+    opacity 0.22s ease,
+    filter 0.22s ease;
+  pointer-events: none;
+}
+
+/* INAKTÍV */
+.staminaSeg:not(.active)::before {
+  opacity: 0.20;
+  filter: brightness(0.28) saturate(0.35);
+  box-shadow:
+    inset 0 0 3px rgba(255,255,255,0.02),
+    0 0 2px rgba(0,0,0,0.25);
+}
+
+.staminaSeg:not(.active)::after {
+  opacity: 0;
+}
+
+/* AKTÍV alap */
+.staminaSeg.active {
+  transform: translateY(-1px);
+}
+
+.staminaSeg.active::before {
+  opacity: 1;
+}
+
+/* BAL */
+.staminaSeg.left {
+  left: 2.99%;
+  width: 32.8%;
+  clip-path: polygon(30% 0, 100% 0, 100% 100%, 0 100%, 0 30%);
+}
+
+/* KÖZÉP */
+.staminaSeg.mid {
+  left: 36.2%;
+  width: 26.2%;
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+}
+
+/* JOBB */
+.staminaSeg.right {
+  left: 63.1%;
+  width: 32.8%;
+  clip-path: polygon(0 0, 91% 0, 100% 18%, 100% 100%, 0 100%);
+}
+
+.staminaLabel {
+  margin-top: 4px;
+  text-align: center;
+  font-size: 14px;
+  color: white;
+  text-shadow: 0 0 6px rgba(0, 0, 0, 0.9);
+  pointer-events: none;
+}
+
+/* ===== CLASS SZÍNEK ===== */
+
+.stamina-mage {
+  --stamina-main: #53d6ff;
+  --stamina-dark: #1b5eff;
+}
+
+.stamina-warrior {
+  --stamina-main: #c9a227;
+  --stamina-dark: #6f5200;
+}
+
+.stamina-archer {
+  --stamina-main: #77ff9e;
+  --stamina-dark: #1f8f57;
+}
+
+/* ===== STAMINA SZINTEK ===== */
+
+/* 3/3 = brutál világít */
+.staminaBarWrap.stamina-level-3 .staminaSeg.active::before {
+  filter: brightness(1.65) saturate(1.45);
+  box-shadow:
+    inset 0 0 16px rgba(255,255,255,0.18),
+    0 0 18px var(--stamina-main),
+    0 0 34px var(--stamina-main);
+}
+
+.staminaBarWrap.stamina-level-3 .staminaSeg.active::after {
+  opacity: 0.42;
+  filter: blur(14px);
+  animation: staminaPulseStrong 1s ease-in-out infinite alternate;
+}
+
+/* 2/3 = jól látható */
+.staminaBarWrap.stamina-level-2 .staminaSeg.active::before {
+  filter: brightness(1.25) saturate(1.18);
+  box-shadow:
+    inset 0 0 12px rgba(255,255,255,0.10),
+    0 0 12px var(--stamina-main),
+    0 0 20px var(--stamina-main);
+}
+
+.staminaBarWrap.stamina-level-2 .staminaSeg.active::after {
+  opacity: 0.24;
+  filter: blur(10px);
+}
+
+/* 1/3 = épphogy él */
+.staminaBarWrap.stamina-level-1 .staminaSeg.active::before {
+  filter: brightness(0.82) saturate(0.88);
+  box-shadow:
+    inset 0 0 7px rgba(255,255,255,0.05),
+    0 0 6px var(--stamina-main);
+}
+
+.staminaBarWrap.stamina-level-1 .staminaSeg.active::after {
+  opacity: 0.10;
+  filter: blur(8px);
+}
+
+/* 0/3 = teljesen kihunyt */
+.staminaBarWrap.stamina-level-0 .staminaSeg::before {
+  opacity: 0.12;
+  filter: brightness(0.18) saturate(0.2);
+  box-shadow: inset 0 0 2px rgba(255,255,255,0.01);
+}
+
+.staminaBarWrap.stamina-level-0 .staminaSeg::after {
+  opacity: 0;
+}
+
+@keyframes staminaPulseStrong {
+  from {
+    opacity: 0.28;
+    transform: scale(0.98);
+  }
+  to {
+    opacity: 0.48;
+    transform: scale(1.03);
+  }
+}
+
+.passTurnButton {
+  color: #fef9c2;
+  background-color: #460809;
+  font-size: 20px;
+  font-family: "Jersey 10", sans-serif;
+  border: 0;
+  cursor: pointer;
+  min-width: 180px;
+  white-space: nowrap;
+  padding: 10px 18px;
+  transition: transform 0.01s ease, filter 0.12s ease;
+  box-shadow:
+    0px 5px black,
+    0px -5px black,
+    5px 0px black,
+    -5px 0px black,
+    0px 10px #00000038,
+    5px 5px #00000038,
+    -5px 5px #00000038,
+    inset 0px 5px #ffffff36;
+}
+
+.passTurnButton:hover {
+  filter: brightness(1.08);
+}
+.continueBattleButton {
+  color: #fef9c2;
+  background-color: #460809;
+  font-size: 26px;
+  font-family: "Jersey 10", sans-serif;
+  border: 0;
+  cursor: pointer;
+  padding: 12px 22px;
+  min-width: 180px;
+  white-space: nowrap;
+  text-align: center;
+  margin-top: -8px; /* ettől megy kicsit feljebb */
+  transition: transform 0.01s ease, filter 0.12s ease;
+  box-shadow:
+    0px 5px black,
+    0px -5px black,
+    5px 0px black,
+    -5px 0px black,
+    0px 10px #00000038,
+    5px 5px #00000038,
+    -5px 5px #00000038,
+    inset 0px 5px #ffffff36;
+}
+
+.continueBattleButton:hover {
+  filter: brightness(1.08);
+}
+
+.continueBattleButton:active {
+  transform: translateY(4px);
+  box-shadow:
+    0px 2px black,
+    0px -2px black,
+    2px 0px black,
+    -2px 0px black,
+    inset 0px 3px #ffffff24;
+}
