@@ -1,6 +1,7 @@
 // frontend/src/components/QuestDetailsModal.jsx
 import React, { useState } from "react";
 import { usePlayer } from "../context/PlayerContext.jsx";
+import "./QuestBoardModal.css";
 
 export default function QuestDetailsModal({
   quest,
@@ -9,26 +10,36 @@ export default function QuestDetailsModal({
   playerId,
   onStartQuestBattle
 }) {
-  const isClassBossQuest =
-  quest.task_type === "boss" && Number(quest.class_required) > 0;
 
-const canStartQuestBattle =
-  quest.status === "in_progress" && isClassBossQuest;
+  const isClassBossQuest =
+    quest.task_type === "boss" && Number(quest.class_required) > 0;
+
+  const canStartQuestBattle =
+    quest.status === "in_progress" && isClassBossQuest;
+
+  const canClaim = quest.status === "completed";
+
   const [msg, setMsg] = useState("");
-  const { setPlayer } = usePlayer();   // ⬅⬅⬅ EZ HIÁNYZOTT
+
+  const { setPlayer } = usePlayer();
 
   async function handleClaim() {
+
     setMsg("");
 
     try {
-      const res = await fetch("https://nodejs202.dszcbaross.edu.hu/api/quests/claim", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          playerId: playerId,
-          questId: quest.quest_id,
-        }),
-      });
+
+      const res = await fetch(
+        "https://nodejs202.dszcbaross.edu.hu/api/quests/claim",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            playerId: playerId,
+            questId: quest.quest_id,
+          }),
+        }
+      );
 
       const data = await res.json();
 
@@ -37,42 +48,41 @@ const canStartQuestBattle =
         return;
       }
 
-      setMsg("✅ Jutalom átvéve!");
+      setMsg("Jutalom átvéve.");
 
-      // 🔄 játékos újratöltése a szerverről
-      try {
-        const fresh = await fetch(
-          `https://nodejs202.dszcbaross.edu.hu/api/players/${playerId}`
-        ).then((r) => r.json());
+      const fresh = await fetch(
+        `https://nodejs202.dszcbaross.edu.hu/api/players/${playerId}`
+      ).then((r) => r.json());
 
-        // ⚠ csak azt írjuk felül, amit biztosan visszakapunk
-        setPlayer((prev) =>
-          !prev
-            ? prev
-            : {
-                ...prev,
-                xp: fresh.xp,
-                level: fresh.level,
-                gold: fresh.gold,
-                // ha majd a backendben visszaküldöd:
-                // unspentStatPoints: fresh.unspentStatPoints ?? prev.unspentStatPoints,
-              }
-        );
-      } catch (e) {
-        console.error("Player refresh error:", e);
-      }
+      setPlayer((prev) =>
+        !prev
+          ? prev
+          : {
+              ...prev,
+              xp: fresh.xp,
+              level: fresh.level,
+              gold: fresh.gold,
+            }
+      );
 
       if (onClaimSuccess) onClaimSuccess(quest.quest_id);
+
     } catch (err) {
-      console.error("Claim error:", err);
+
+      console.error(err);
       setMsg("Hiba történt a claim során.");
+
     }
   }
-    function startBattle() {
+
+  function startBattle() {
+
     const bossName =
-      Number(quest.class_required) === 6 ? "Mountain King"
-      : Number(quest.class_required) === 7 ? "Arcane Abomination"
-      : "Forest Spirit Beast";
+      Number(quest.class_required) === 6
+        ? "Mountain King"
+        : Number(quest.class_required) === 7
+        ? "Arcane Abomination"
+        : "Forest Spirit Beast";
 
     onStartQuestBattle?.({
       questId: quest.quest_id,
@@ -80,104 +90,126 @@ const canStartQuestBattle =
       boss: true,
       mode: "quest",
     });
+
   }
 
-  const canClaim = quest.status === "completed";
+  /* ---------- PAPÍR TEXT MANUÁLIS ÁLLÍTÁS ---------- */
+
+  const paperSettings = [
+    { padding: "150px 160px", fontSize: "24px" },
+    { padding: "150px 160px", fontSize: "24px" },
+    { padding: "150px 160px", fontSize: "24px" },
+    { padding: "170px 170px", fontSize: "24px" },
+    { padding: "170px 170px", fontSize: "24px" },
+    { padding: "170px 170px", fontSize: "24px" }
+  ];
+
+  const paperIndex = quest.paperIndex ?? 0;
+  const settings = paperSettings[paperIndex];
 
   return (
-    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
-      <div className="bg-[#3a2615] text-yellow-200 border border-yellow-700 rounded-xl shadow-[0_0_40px_rgba(0,0,0,0.9)] p-6 w-[420px] font-serif relative">
+
+<div className="fixed inset-0 z-50 flex items-center justify-center ">
+
+  {/* HÁTTÉR OVERLAY */}
+  <div
+    className="absolute inset-0 bg-black/70"
+    onClick={onClose}
+  />
+
+  {/* PAPÍR */}
+  <div
+    style={{
+      width: "900px",
+      height: "750px",
+      backgroundImage: `url(/images/quest11.png)`,
+      backgroundSize: "contain",
+      backgroundRepeat: "no-repeat",
+      backgroundPosition: "center",
+      position: "relative",
+      fontFamily: '"Jersey 10", sans-serif',
+      zIndex: 10
+    }}
+  >
+    
+
+    {/* SAFE TEXT AREA */}
+    <div className="szovegek"
+      style={{
+        //background:"black",
+        position: "absolute",
+        top: "150px",
+        left: "240px",
+        width: "440px",
+        height: "450px",
+        overflow: "hidden",
+        textAlign: "center",
+        //color: "black",
+        fontSize: "30px",
+        lineHeight: "1.25",
+
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        gap: "15px"
+      }}
+    >
+      
+
+      <h2 style={{ fontSize: "36px" }}>
+        {quest.title}
+      </h2>
+
+      {canStartQuestBattle && (
         <button
-          onClick={onClose}
-          className="absolute top-2 right-3 text-yellow-300 hover:text-red-400 text-lg"
+          onClick={startBattle}
+          className="quest-text-button"
         >
-          ✕
+          Quest battle
         </button>
+      )}
 
-        <h2 className="text-2xl text-center mb-3 text-amber-300">
-          {quest.title}
-        </h2>
-        {canStartQuestBattle && (
-            <button
-              onClick={startBattle}
-              className="px-4 py-2 bg-red-600 hover:bg-red-500 rounded text-xs text-black"
-            >
-              Quest battle ⚔️
-            </button>
-          )}
+      <div>{quest.description}</div>
 
-        <div className="text-xs text-yellow-300/80 mb-1">Leírás:</div>
-        <p className="text-sm mb-3 text-yellow-100">
-          {quest.description}
-        </p>
-
-        <div className="text-xs text-yellow-300/80 mb-1">Cél:</div>
-        <div className="text-sm mb-3">
-          {quest.task_type === "kill" && "Ölj meg ellenfeleket."}
-          {quest.task_type === "boss" && "Győzz le egy főellenséget."}
-          {quest.task_type === "custom" &&
-            "Teljesítsd a speciális feltételt."}
-        </div>
-
-        <div className="text-xs mb-3">
-          Haladás: {quest.progress}/{quest.target_amount}
-        </div>
-
-
-            
-        <div className="mb-4 text-sm">
-          <div className="text-xs text-yellow-300/80 mb-1">
-            Jutalom:
-          </div>
-          <div className="flex flex-col">
-            <span className="text-green-300">+{quest.reward_xp} XP</span>
-            <span className="text-yellow-300">
-              +{quest.reward_gold} arany
-            </span>
-          </div>
-        </div>
-
-        <div className="flex justify-between items-center mt-3">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded text-xs"
-          >
-            Bezárás
-          </button>
-
-          {quest.status === "locked" && (
-            <span className="text-xs text-gray-300">🔒 Még zárolva</span>
-          )}
-
-          {quest.status === "in_progress" && (
-            <span className="text-xs text-amber-200">
-              ⏳ Folyamatban – harcolj tovább!
-            </span>
-          )}
-
-          {quest.status === "claimed" && (
-            <span className="text-xs text-blue-300">
-              🏁 Már átvetted
-            </span>
-          )}
-
-          {canClaim && (
-            <button
-              onClick={handleClaim}
-              className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 rounded text-xs text-black"
-            >
-              Jutalom átvétele
-            </button>
-          )}
-        </div>
-
-        {msg && (
-          <div className="mt-3 text-center text-xs text-amber-200">
-            {msg}
-          </div>
-        )}
-        
+      <div>
+        {quest.task_type === "kill" && "Ölj meg ellenfeleket."}
+        {quest.task_type === "boss" && "Győzz le egy főellenséget."}
+        {quest.task_type === "custom" && "Teljesítsd a speciális feltételt."}
       </div>
+
+      <div>
+        Haladás: {quest.progress}/{quest.target_amount}
+      </div>
+
+      <div>
+        +{quest.reward_xp} XP<br/>
+        +{quest.reward_gold} arany
+      </div>
+
+      {quest.status === "locked" && <div>Még zárolva</div>}
+      {quest.status === "in_progress" && <div>Folyamatban</div>}
+      {quest.status === "claimed" && <div>Már átvetted</div>}
+
+      {canClaim && (
+        <button
+          onClick={handleClaim}
+          className="quest-text-button"
+        >
+          Jutalom átvétele
+        </button>
+      )}
+
+      {msg && <div>{msg}</div>}
+      <button
+        onClick={onClose}
+        className="quest-paper-close-text"
+      >
+        Bezárás
+      </button>
     </div>
-  );
+
+  </div>
+
+</div>
+);
 }

@@ -16,9 +16,7 @@
 .hub-hamburger {
   width: 44px;
   height: 44px;
-  border-radius: 10px;
-  border: 2px solid #960000;
-  background: rgba(48, 0, 0, 0.75);
+  background: #460809;
   box-shadow: 0px 5px black, 0px -5px black, 5px 0px black, -5px 0px black,
     0px 10px #00000038, 5px 5px #00000038, -5px 5px #00000038,
     inset 0px 5px #ffffff36;
@@ -30,13 +28,17 @@
   cursor: pointer;
 }
 
+.hub-hamburger:active {
+     transform: translateY(5px);
+     box-shadow: 0px 5px black, 0px -5px black, 5px 0px black, -5px 0px black,inset 0px 5px #00000038;
+}
+
 .hub-hamburger:hover {
   filter: brightness(1.08);
 }
 
 .hub-hamburger-line {
   height: 3px;
-  border-radius: 999px;
   background: #fef9c2;
   display: block;
 }
@@ -50,15 +52,15 @@
 }
 
 .hub-menu-panel {
+  text-align: center;
   position: absolute;
   top: 54px;
   right: 0;
   width: 240px;
   padding: 12px;
-  border-radius: 12px;
-  border: 2px solid #960000;
-  background: rgba(12, 0, 0, 0.92);
-  box-shadow: 0px 8px 30px rgba(0, 0, 0, 0.6);
+  background: #460809;
+  box-shadow: 0px 5px black, 0px -5px black, 5px 0px black, -5px 0px black,
+    0px 10px #00000038, 5px 5px #00000038, -5px 5px #00000038;
   z-index: 12010;
 }
 
@@ -75,26 +77,27 @@
 .hub-menu-item {
   width: 100%;
   padding: 10px 12px;
-  margin: 6px 0;
-  border-radius: 10px;
-  border: 2px solid #960000;
+  margin: 12px 0;
   background: rgba(48, 0, 0, 0.65);
   color: #fef9c2;
   font-family: "Jersey 10", sans-serif;
   font-size: 20px;
   letter-spacing: 1px;
   cursor: pointer;
-  box-shadow: inset 0px 3px #ffffff1f;
+  box-shadow: 0px 5px black, 0px -5px black, 5px 0px black, -5px 0px black,
+    0px 10px #00000038, 5px 5px #00000038, -5px 5px #00000038,
+    inset 0px 5px #ffffff36;
+}
+
+.hub-menu-item:active {
+     transform: translateY(5px);
+     box-shadow: 0px 5px black, 0px -5px black, 5px 0px black, -5px 0px black,inset 0px 5px #00000038;
 }
 
 .hub-menu-item:hover {
   filter: brightness(1.08);
 }
 
-.hub-menu-item.danger {
-  border-color: #b30000;
-  background: rgba(110, 0, 0, 0.65);
-}
 
 /* Hub.css */
 
@@ -186,13 +189,13 @@
   background: rgba(48, 0, 0, 0.7);
   color: #ffffff; /* Arany szín a fantasy hangulathoz */
   padding: 10px 30px;
-  border-radius: 5px;
   border: 2px solid #960000;
   font-size: 24px;
   font-family: "Jersey 10", sans-serif; /* Ha van fantasy fontod */
   z-index: 100;
   pointer-events: none; /* Ne zavarjon bele a kattintásba */
   animation: fadeIn 0.3s ease-in-out;
+  
 }
 
 @keyframes fadeIn {
@@ -212,14 +215,12 @@
   top: -40px; /* A keret teteje fölé tolja (állítsd be, ahogy tetszik) */
 
   padding: 4px 12px;
-  border-radius: 4px;
   white-space: nowrap; /* Ne törje tördelt sorba a szöveget */
   pointer-events: none; /* Ne zavarjon be a kattintásba */
   color: #fef9c2;
   background-color: #460809;
   font-size: 20px;
   font-family: "Jersey 10", sans-serif;
-  border: 0;
   box-shadow: 0px 5px black, 0px -5px black, 5px 0px black, -5px 0px black,
     0px 10px #00000038, 5px 5px #00000038, -5px 5px #00000038,
     inset 0px 5px #ffffff36;
@@ -246,7 +247,6 @@
   width: min(680px, 92vw);
   background: rgba(18, 18, 18, 0.96);
   border: 1px solid rgba(255, 255, 255, 0.14);
-  border-radius: 14px;
   padding: 28px;
   color: #f2f2f2;
   text-align: center;
@@ -262,4 +262,55 @@
   margin: 0 0 12px;
   line-height: 1.55;
   color: #d7d7d7;
+}
+
+.logout-confirm{
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(400px, 90vw);
+  padding: 14px;
+  background-color: #290f0f;
+  color: #fef9c2;
+  font-family: "Jersey 10", sans-serif;
+  font-size: 24px;
+  letter-spacing: 2px;
+  text-align: center;
+  box-shadow:
+    0px 5px #000,
+    0px -5px #000,
+    5px 0px #000,
+    -5px 0px #000;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.logout-confirm p{
+  margin: 0;
+  font-size: 28px;
+}
+
+.logout-confirm button{
+  height: 48px;
+  font-size: 22px;
+  font-family: "Jersey 10", sans-serif;
+  color: #fef9c2;
+  background-color: #460809;
+  border: 0;
+  cursor: pointer;
+  box-shadow: 0px 5px black, 0px -5px black, 5px 0px black, -5px 0px black, 0px 10px #00000038, 5px 5px #00000038, -5px 5px #00000038, inset 0px 5px #ffffff36;
+
+}
+
+.logout-confirm button:active{
+  transform: translateY(5px);
+  box-shadow:
+    0px 5px #000,
+    0px -5px #000,
+    5px 0px #000,
+    -5px 0px #000,
+    inset 0px 5px #00000038;
 }

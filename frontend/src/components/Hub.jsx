@@ -10,7 +10,7 @@ import "./Hub.css";
 import TutorialOverlay from "./TutorialOverlay.jsx";
 
 export default function Hub({ onGoAdventure, onStartQuestBattle }) {
-  const { player } = usePlayer();
+  const { player, logout } = usePlayer();
   const { t } = useLanguage();
 
   const timeoutRef = useRef(null);
@@ -26,6 +26,8 @@ export default function Hub({ onGoAdventure, onStartQuestBattle }) {
   const [showInv, setShowInv] = useState(false);
   const [showQuestBoard, setShowQuestBoard] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  
 
   const isAnyModalOpen =
     showShop || showBlacksmith || showInv || showQuestBoard || showSettings;
@@ -236,7 +238,7 @@ export default function Hub({ onGoAdventure, onStartQuestBattle }) {
                 className="hub-menu-item danger"
                 onClick={() => {
                   setIsMenuOpen(false);
-                  alert(t("logoutPlaceholder"));
+                  setShowLogoutConfirm(true);
                 }}
               >
                 {t("logout")}
@@ -414,6 +416,26 @@ export default function Hub({ onGoAdventure, onStartQuestBattle }) {
       )}
 
       {showSettings && <BeallitasokModal onClose={() => setShowSettings(false)} />}
+      {showLogoutConfirm && (
+        <div className="logout-confirm">
+          <p>{t("Biztosan ki akarsz jelentkezni?")}</p>
+
+          <button
+            onClick={() => {
+              logout();
+              window.location.href = "/";
+            }}
+          >
+            {t("Igen")}
+          </button>
+
+          <button
+            onClick={() => setShowLogoutConfirm(false)}
+          >
+            {t("Nem")}
+          </button>
+        </div>
+      )}
     </div>
   );
 }

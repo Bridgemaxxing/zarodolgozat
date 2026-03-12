@@ -17,6 +17,22 @@ function safeNum(v, fallback = 0) {
 
 export function PlayerProvider({ children }) {
   const [player, setPlayer] = useState(null);
+  const logout = useCallback(() => {
+  localStorage.removeItem("token");
+  localStorage.removeItem("player");
+
+  setPlayer(null);
+  setDerivedStats(null);
+
+  setItemBonuses({
+    strength: 0,
+    intellect: 0,
+    defense: 0,
+    hp: 0,
+  });
+
+  setMageMana(0);
+}, []);
 
   // ✅ item bónuszok külön (zárójeles + kijelzéshez)
   const [itemBonuses, setItemBonuses] = useState({
@@ -104,7 +120,7 @@ const refreshFullStats = useCallback(async (playerId) => {
     () => ({
       player,
       setPlayer,
-
+      logout,
       // statok
       itemBonuses,
       derivedStats,
