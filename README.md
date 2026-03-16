@@ -3,6 +3,7 @@
 ## A játék bemutatása
 
 Ez a projekt egy **2D dark fantasy hangulatú, körökre osztott harcrendszerű játék**, amelyet a végső projektmunkánk részeként készítettünk.
+(Jelenleg a játék :"https://eclipsebound.pages.dev/" ezen a linken elérhető alpha test)
 
 A játékban a játékos különböző kalandokat választhat, ahol ellenségekkel találkozik, harcol velük, és fokozatosan egyre erősebbé válik.
 
