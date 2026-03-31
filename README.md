@@ -20,15 +20,15 @@ A játék célja, hogy a játékos folyamatosan fejlődjön, új kihívásokkal 
 
 ## Képek a projektről
 
-### Combat rendszer
+### Harc rendszer rendszer
 <img src="images_for_readme/combat.PNG" alt="combat" width="800"/>
 
 
-### Hub
+### Centrum
 <img src="images_for_readme/hub.PNG" alt="hub" width="800"/>
 
 
-### Inventory rendszer
+### Leltár rendszer
 <img src="images_for_readme/inv.PNG" alt="inventory" width="800"/>
 
 
