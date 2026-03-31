@@ -20,7 +20,7 @@ A játék célja, hogy a játékos folyamatosan fejlődjön, új kihívásokkal 
 
 ## Képek a projektről
 
-### Harc rendszer rendszer
+### Harc rendszer
 <img src="images_for_readme/combat.PNG" alt="combat" width="800"/>
 
 
